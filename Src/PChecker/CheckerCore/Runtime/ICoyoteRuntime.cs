@@ -133,5 +133,13 @@ namespace PChecker.Runtime
         /// Terminates the runtime and notifies each active actor to halt execution.
         /// </summary>
         void Stop();
+
+
+        /// <summary>
+        /// Save the current random choices to file.
+        /// </summary>
+        /// <param name="path">Path of the file.</param>
+        void SaveRandomChoicesToFile(String path);
+        
     }
 }

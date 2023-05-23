@@ -24,6 +24,8 @@ namespace PChecker.Instrumentation
     public static class CodeCoverageInstrumentation
     {
         internal static string OutputDirectory = string.Empty;
+        internal static string BugsFolder = string.Empty;
+        internal static string CorpusFolder = string.Empty;
 
         /// <summary>
         /// Set the <see cref="OutputDirectory"/> to either the user-specified <see cref="CheckerConfiguration.OutputFilePath"/>
@@ -73,6 +75,10 @@ namespace PChecker.Instrumentation
 
             // Now create the new directory.
             Directory.CreateDirectory(OutputDirectory);
+            BugsFolder = OutputDirectory + "corpus" + Path.DirectorySeparatorChar;
+            CorpusFolder = OutputDirectory + "bugs" + Path.DirectorySeparatorChar;
+            Directory.CreateDirectory(BugsFolder);
+            Directory.CreateDirectory(CorpusFolder);
         }
     }
 }

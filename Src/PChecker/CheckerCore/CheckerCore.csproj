@@ -17,6 +17,7 @@
         <PackageIcon>icon.png</PackageIcon>
         <RepositoryUrl>https://github.com/p-org/P</RepositoryUrl>
         <PackageReadmeFile>README.md</PackageReadmeFile>
+        <Nullable>enable</Nullable>
     </PropertyGroup>
     <ItemGroup>
         <None Include="../../../Icon/icon.png" Pack="true" PackagePath="" />

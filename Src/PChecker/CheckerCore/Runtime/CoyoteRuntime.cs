@@ -297,5 +297,15 @@ namespace PChecker.Runtime
             Dispose(true);
             GC.SuppressFinalize(this);
         }
+
+        /// <summary>
+        /// Save the current random choices to file.
+        /// </summary>
+        /// <param name="path">Path of the file.</param>
+        public void SaveRandomChoicesToFile(String path)
+        {
+            ValueGenerator.SaveToFile(path);
+        }
+        
     }
 }

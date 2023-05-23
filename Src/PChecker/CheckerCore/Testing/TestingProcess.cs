@@ -80,6 +80,8 @@ namespace PChecker.Testing
 
         private async Task RunAsync()
         {
+            // Create the output directory before testing starts.
+            CodeCoverageInstrumentation.SetOutputDirectory(_checkerConfiguration, makeHistory: false);
             TestingEngine.Run();
 
             Console.SetOut(StdOut);

@@ -15,6 +15,7 @@ using System.Xml;
 using PChecker.Actors;
 using PChecker.Actors.Logging;
 using PChecker.Coverage;
+using PChecker.Instrumentation;
 using PChecker.IO;
 using PChecker.IO.Debugging;
 using PChecker.IO.Logging;
@@ -433,7 +434,7 @@ namespace PChecker.SystematicTesting
             try
             {
                 // Creates a new instance of the controlled runtime.
-                runtime = new ControlledRuntime(_checkerConfiguration, Strategy, RandomValueGenerator);
+                runtime = new ControlledRuntime(_checkerConfiguration, Strategy, new StreamBasedValueGenerator());
 
                 // If verbosity is turned off, then intercept the program log, and also redirect
                 // the standard output and error streams to a nul logger.
@@ -472,6 +473,7 @@ namespace PChecker.SystematicTesting
                 if (runtime.Scheduler.BugFound)
                 {
                     ErrorReporter.WriteErrorLine(runtime.Scheduler.BugReport);
+                    runtime.SaveRandomChoicesToFile(CodeCoverageInstrumentation.BugsFolder + TestReport.NumOfFoundBugs + ".bin");
                 }
 
                 runtime.LogWriter.LogCompletion();
