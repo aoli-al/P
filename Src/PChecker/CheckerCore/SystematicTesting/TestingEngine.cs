@@ -383,6 +383,7 @@ namespace PChecker.SystematicTesting
                         {
                             maxIterations++;
                         }
+
                     }
 
                     // Invokes the user-specified test disposal method.
@@ -417,6 +418,10 @@ namespace PChecker.SystematicTesting
             if (!IsReplayModeEnabled && ShouldPrintIteration(iteration + 1))
             {
                 Logger.WriteLine($"..... Iteration #{iteration + 1}");
+                if (TestReport.CoverageInfo.EventInfo != null)
+                {
+                    Logger.WriteLine($"..... Total covered stats: #{TestReport.CoverageInfo.EventInfo.ExploredNumState()}");
+                }
 
                 // Flush when logging to console.
                 if (Logger is ConsoleLogger)

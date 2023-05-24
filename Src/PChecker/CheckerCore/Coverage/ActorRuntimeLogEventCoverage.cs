@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.Serialization;
 using PChecker.Actors;
 using PChecker.Actors.Events;
@@ -65,6 +66,14 @@ namespace PChecker.Coverage
             }
 
             set.Add(eventId);
+        }
+
+        /// <summary>
+        /// Returns the total explored stated.
+        /// </summary>
+        public int ExploredNumState()
+        {
+            return EventsReceived.Values.Sum(set => set.Count) + EventsSent.Values.Sum(set => set.Count);
         }
 
         /// <summary>
@@ -197,7 +206,7 @@ namespace PChecker.Coverage
         public void OnMonitorProcessEvent(string monitorType, string stateName, string senderName,
             string senderType, string senderStateName, Event e)
         {
-            EventCoverage.AddEventReceived(GetStateId(monitorType, stateName), e.GetType().Name);
+            EventCoverage.AddEventReceived(GetStateId(senderName, monitorType, stateName), e.GetType().Name);
         }
 
         public void OnMonitorRaiseEvent(string monitorType, string stateName, Event e)
@@ -247,7 +256,7 @@ namespace PChecker.Coverage
             Event e, Guid opGroupId, bool isTargetHalted)
         {
             var eventName = e.GetType().FullName;
-            EventCoverage.AddEventSent(GetStateId(senderType, senderStateName), eventName);
+            EventCoverage.AddEventSent(GetStateId(senderName, senderType, senderStateName), eventName);
         }
 
         public void OnStateTransition(ActorId id, string stateName, bool isEntry)
@@ -268,6 +277,11 @@ namespace PChecker.Coverage
 
         public void OnWaitEvent(ActorId id, string stateName, params Type[] eventTypes)
         {
+        }
+
+        private static string GetStateId(string sender, string actorType, string stateName)
+        {
+            return sender + "." + GetStateId(actorType, stateName);
         }
 
         private static string GetStateId(string actorType, string stateName)

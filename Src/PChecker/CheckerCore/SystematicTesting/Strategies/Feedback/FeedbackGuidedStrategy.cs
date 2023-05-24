@@ -4,13 +4,18 @@ using System.Linq;
 using PChecker.Actors;
 using PChecker.Random;
 using PChecker.SystematicTesting.Operations;
+using PChecker.SystematicTesting.Strategies.Feedback.Mutator;
 
 namespace PChecker.SystematicTesting.Strategies.Feedback;
 
-record StrategyInputGenerator(IRandomValueGenerator InputGenerator, IRandomValueGenerator ScheduleGenerator);
+record StrategyGenerator(StreamBasedValueGenerator InputGenerator, StreamBasedValueGenerator ScheduleGenerator);
+
+record StrategyMutator(IMutator InputMutator, IMutator ScheduleMutator);
+
 internal class FeedbackGuidedStrategy : ISchedulingStrategy
 {
-    private StrategyInputGenerator _generator;
+    private StrategyGenerator _generator;
+    private StrategyMutator _mutator = new StrategyMutator(new RandomMutator(), new RandomMutator());
 
     private readonly int _maxScheduledSteps;
 
@@ -20,13 +25,13 @@ internal class FeedbackGuidedStrategy : ISchedulingStrategy
 
     private readonly HashSet<int> _visitedStates = new();
 
-    private readonly LinkedList<StrategyInputGenerator> _savedGenerators = new();
+    private readonly LinkedList<StrategyGenerator> _savedGenerators = new();
 
     private readonly int _maxMutations = 50;
 
     private int _numMutations = 0;
 
-    private LinkedListNode<StrategyInputGenerator>? _currentNode = null;
+    private LinkedListNode<StrategyGenerator>? _currentNode = null;
 
 
     /// <summary>
@@ -36,8 +41,8 @@ internal class FeedbackGuidedStrategy : ISchedulingStrategy
     {
         _maxScheduledSteps = checkerConfiguration.MaxFairSchedulingSteps;
         _checkerConfiguration = checkerConfiguration;
-        _generator = new StrategyInputGenerator(new RandomValueGenerator(_checkerConfiguration),
-            new RandomValueGenerator(_checkerConfiguration));
+        _generator = new StrategyGenerator(new StreamBasedValueGenerator(_checkerConfiguration),
+            new StreamBasedValueGenerator(_checkerConfiguration));
     }
 
     /// <inheritdoc/>
@@ -138,8 +143,8 @@ internal class FeedbackGuidedStrategy : ISchedulingStrategy
         if (_savedGenerators.Count == 0)
         {
             // Create a new input if no input is saved.
-            _generator = new StrategyInputGenerator(new RandomValueGenerator(_checkerConfiguration),
-                new RandomValueGenerator(_checkerConfiguration));
+            _generator = new StrategyGenerator(new StreamBasedValueGenerator(_checkerConfiguration),
+                new StreamBasedValueGenerator(_checkerConfiguration));
             return;
         }
         if (_numMutations == _maxMutations)
@@ -150,10 +155,11 @@ internal class FeedbackGuidedStrategy : ISchedulingStrategy
         _generator = MutateGenerator(_currentNode!.Value);
     }
 
-    private StrategyInputGenerator MutateGenerator(StrategyInputGenerator prev)
+    private StrategyGenerator MutateGenerator(StrategyGenerator prev)
     {
-        // TODO: implement real mutation strategies.
-        return new StrategyInputGenerator(new RandomValueGenerator(_checkerConfiguration),
-            new RandomValueGenerator(_checkerConfiguration));
+        return new StrategyGenerator(
+            _mutator.InputMutator.Mutate(prev.InputGenerator),
+            _mutator.ScheduleMutator.Mutate(prev.ScheduleGenerator)
+        );
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 
 namespace PChecker.Random
@@ -15,7 +16,16 @@ namespace PChecker.Random
         /// </summary>
         private readonly System.Random _random;
 
-        private readonly MemoryStream _bytes = new MemoryStream();
+        private readonly MemoryStream _bytes = new();
+
+        public byte[] GetBytesCopy()
+        {
+            long pos = _bytes.Position;
+            _bytes.Position = 0;
+            byte[] output = new byte[_bytes.Length];
+            Debug.Assert(_bytes.Read(output) == _bytes.Length);
+            return output;
+        }
 
 
         public uint Seed { get; set; }
