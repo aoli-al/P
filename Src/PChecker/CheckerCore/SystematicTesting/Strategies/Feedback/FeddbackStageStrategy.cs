@@ -3,12 +3,12 @@ using PChecker.Random;
 namespace PChecker.SystematicTesting.Strategies.Feedback;
 
 
-internal class FeedBackStageStrategy : FeedbackGuidedStrategy
+internal class TwoStageFeedbackStrategy : FeedbackGuidedStrategy
 {
 
     private int _scheduleMutationWithoutUpdates = 0;
-    private readonly int _maxSchedulMutationsWithoutUpdates = 10;
-    public FeedBackStageStrategy(CheckerConfiguration checkerConfiguration) : base(checkerConfiguration)
+    private readonly int _maxSchedulMutationsWithoutUpdates = 100;
+    public TwoStageFeedbackStrategy(CheckerConfiguration checkerConfiguration) : base(checkerConfiguration)
     {
     }
 

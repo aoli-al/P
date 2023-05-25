@@ -256,6 +256,10 @@ namespace PChecker.SystematicTesting
             {
                 Strategy = new FeedbackGuidedStrategy(_checkerConfiguration);
             }
+            else if (checkerConfiguration.SchedulingStrategy is "2stagefeedback")
+            {
+                Strategy = new TwoStageFeedbackStrategy(_checkerConfiguration);
+            }
             else if (checkerConfiguration.SchedulingStrategy is "portfolio")
             {
                 Error.ReportAndExit("Portfolio testing strategy is only " +
