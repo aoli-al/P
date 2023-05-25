@@ -89,7 +89,7 @@ namespace PChecker.Random
             }
             var reader = new BinaryReader(_bytes);
             int value = reader.ReadInt32();
-            if (value < 0)
+            while (value < 0)
             {
                 value += int.MaxValue;
             }
@@ -103,7 +103,8 @@ namespace PChecker.Random
         /// <param name="maxValue">Exclusive upper bound.</param>
         public int Next(int maxValue)
         {
-            return maxValue == 0 ? 0 : Next() % maxValue;
+            var value = maxValue == 0 ? 0 : Next() % maxValue;
+            return value;
         }
 
         /// <summary>

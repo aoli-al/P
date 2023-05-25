@@ -16,7 +16,7 @@ record StrategyMutator(IMutator InputMutator, IMutator ScheduleMutator);
 internal class FeedbackGuidedStrategy : ISchedulingStrategy
 {
     private StrategyGenerator _generator;
-    private StrategyMutator _mutator = new StrategyMutator(new RandomMutator(), new RandomMutator());
+    protected StrategyMutator Mutator = new StrategyMutator(new RandomMutator(), new RandomMutator());
 
     private readonly int _maxScheduledSteps;
 
@@ -26,7 +26,7 @@ internal class FeedbackGuidedStrategy : ISchedulingStrategy
 
     private readonly EventCoverage _visitedEvents = new();
 
-    private readonly LinkedList<StrategyGenerator> _savedGenerators = new();
+    protected readonly LinkedList<StrategyGenerator> SavedGenerators = new();
 
     private readonly int _maxMutations = 50;
 
@@ -60,6 +60,7 @@ internal class FeedbackGuidedStrategy : ISchedulingStrategy
         next = enabledOperations[idx];
 
         _scheduledSteps++;
+
         return true;
     }
 
@@ -128,21 +129,18 @@ internal class FeedbackGuidedStrategy : ISchedulingStrategy
     /// This method observes the results of previous run and prepare for the next run.
     /// </summary>
     /// <param name="runtime">The ControlledRuntime of previous run.</param>
-    public void ObserveRunningResults(ControlledRuntime runtime)
+    public virtual void ObserveRunningResults(ControlledRuntime runtime)
     {
         // TODO: implement real feedback.
-        int stateHash = runtime.GetCoverageInfo().EventInfo.GetHashCode();
-        if (!_visitedEvents.Contains(stateHash))
+        if (_visitedEvents.Merge(runtime.GetCoverageInfo().EventInfo))
         {
-            _savedGenerators.AddLast(_generator);
+            SavedGenerators.AddLast(_generator);
         }
     }
 
-    // protected bool Merge
-
     private void PrepareNextInput()
     {
-        if (_savedGenerators.Count == 0)
+        if (SavedGenerators.Count == 0)
         {
             // Create a new input if no input is saved.
             _generator = new StrategyGenerator(new StreamBasedValueGenerator(_checkerConfiguration),
@@ -152,16 +150,21 @@ internal class FeedbackGuidedStrategy : ISchedulingStrategy
         if (_numMutations == _maxMutations)
         {
             _currentNode = _currentNode?.Next;
+            _numMutations = 0;
         }
-        _currentNode ??= _savedGenerators.First;
+        else
+        {
+            _numMutations ++;
+        }
+        _currentNode ??= SavedGenerators.First;
         _generator = MutateGenerator(_currentNode!.Value);
     }
 
     protected virtual StrategyGenerator MutateGenerator(StrategyGenerator prev)
     {
         return new StrategyGenerator(
-            _mutator.InputMutator.Mutate(prev.InputGenerator),
-            _mutator.ScheduleMutator.Mutate(prev.ScheduleGenerator)
+            Mutator.InputMutator.Mutate(prev.InputGenerator),
+            Mutator.ScheduleMutator.Mutate(prev.ScheduleGenerator)
         );
     }
 }

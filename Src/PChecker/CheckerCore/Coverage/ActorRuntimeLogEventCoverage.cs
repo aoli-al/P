@@ -90,14 +90,15 @@ namespace PChecker.Coverage
             return Array.Empty<string>();
         }
 
-        internal void Merge(EventCoverage other)
+        internal bool Merge(EventCoverage other)
         {
-            MergeHashSets(EventsReceived, other.EventsReceived);
-            MergeHashSets(EventsSent, other.EventsSent);
+            return MergeHashSets(EventsReceived, other.EventsReceived) ||
+                   MergeHashSets(EventsSent, other.EventsSent);
         }
 
-        private static void MergeHashSets(Dictionary<string, HashSet<string>> ours, Dictionary<string, HashSet<string>> theirs)
+        private static bool MergeHashSets(Dictionary<string, HashSet<string>> ours, Dictionary<string, HashSet<string>> theirs)
         {
+            bool updated = false;
             foreach (var pair in theirs)
             {
                 var stateId = pair.Key;
@@ -107,8 +108,14 @@ namespace PChecker.Coverage
                     ours[stateId] = eventSet;
                 }
 
+                int prevSize = eventSet.Count;
                 eventSet.UnionWith(pair.Value);
+                if (eventSet.Count != prevSize)
+                {
+                    updated = true;
+                }
             }
+            return updated;
         }
 
         public override int GetHashCode() => (EventsSent, EventsReceived).GetHashCode();
