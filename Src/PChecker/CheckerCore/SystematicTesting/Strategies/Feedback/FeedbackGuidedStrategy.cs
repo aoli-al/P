@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using PChecker.Actors;
+using PChecker.Coverage;
 using PChecker.Random;
 using PChecker.SystematicTesting.Operations;
 using PChecker.SystematicTesting.Strategies.Feedback.Mutator;
@@ -23,7 +24,7 @@ internal class FeedbackGuidedStrategy : ISchedulingStrategy
 
     private readonly CheckerConfiguration _checkerConfiguration;
 
-    private readonly HashSet<int> _visitedStates = new();
+    private readonly EventCoverage _visitedEvents = new();
 
     private readonly LinkedList<StrategyGenerator> _savedGenerators = new();
 
@@ -83,8 +84,8 @@ internal class FeedbackGuidedStrategy : ISchedulingStrategy
     /// <inheritdoc/>
     public bool PrepareForNextIteration()
     {
-        // Noop
         _scheduledSteps = 0;
+        PrepareNextInput();
         return true;
     }
 
@@ -131,12 +132,13 @@ internal class FeedbackGuidedStrategy : ISchedulingStrategy
     {
         // TODO: implement real feedback.
         int stateHash = runtime.GetCoverageInfo().EventInfo.GetHashCode();
-        if (!_visitedStates.Contains(stateHash))
+        if (!_visitedEvents.Contains(stateHash))
         {
             _savedGenerators.AddLast(_generator);
         }
-        PrepareNextInput();
     }
+
+    // protected bool Merge
 
     private void PrepareNextInput()
     {
@@ -155,7 +157,7 @@ internal class FeedbackGuidedStrategy : ISchedulingStrategy
         _generator = MutateGenerator(_currentNode!.Value);
     }
 
-    private StrategyGenerator MutateGenerator(StrategyGenerator prev)
+    protected virtual StrategyGenerator MutateGenerator(StrategyGenerator prev)
     {
         return new StrategyGenerator(
             _mutator.InputMutator.Mutate(prev.InputGenerator),

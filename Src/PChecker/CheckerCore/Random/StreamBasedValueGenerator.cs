@@ -103,7 +103,7 @@ namespace PChecker.Random
         /// <param name="maxValue">Exclusive upper bound.</param>
         public int Next(int maxValue)
         {
-            return Next() % maxValue;
+            return maxValue == 0 ? 0 : Next() % maxValue;
         }
 
         /// <summary>
