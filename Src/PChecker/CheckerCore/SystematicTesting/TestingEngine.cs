@@ -422,11 +422,6 @@ namespace PChecker.SystematicTesting
             if (!IsReplayModeEnabled && ShouldPrintIteration(iteration + 1))
             {
                 Logger.WriteLine($"..... Iteration #{iteration + 1}");
-                if (TestReport.CoverageInfo.EventInfo != null)
-                {
-                    Logger.WriteLine($"..... Total covered stats: #{TestReport.CoverageInfo.EventInfo.ExploredNumState()}");
-                }
-
                 // Flush when logging to console.
                 if (Logger is ConsoleLogger)
                 {
@@ -508,6 +503,11 @@ namespace PChecker.SystematicTesting
 
                     ConstructReproducableTrace(runtime);
                 }
+                if (iteration % 10 == 0)
+                {
+                    Logger.WriteLine($"..... Iter: {iteration}, covered states: {TestReport.CoverageInfo.EventInfo.ExploredNumState()}");
+                }
+
             }
             finally
             {
