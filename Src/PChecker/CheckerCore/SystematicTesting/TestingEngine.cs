@@ -254,11 +254,11 @@ namespace PChecker.SystematicTesting
             }
             else if (checkerConfiguration.SchedulingStrategy is "feedback")
             {
-                Strategy = new FeedbackGuidedStrategy(_checkerConfiguration);
+                Strategy = new FeedbackGuidedStrategy<RandomInputGenerator, RandomScheduleGenerator>(_checkerConfiguration);
             }
             else if (checkerConfiguration.SchedulingStrategy is "2stagefeedback")
             {
-                Strategy = new TwoStageFeedbackStrategy(_checkerConfiguration);
+                Strategy = new TwoStageFeedbackStrategy<RandomInputGenerator, RandomScheduleGenerator>(_checkerConfiguration);
             }
             else if (checkerConfiguration.SchedulingStrategy is "portfolio")
             {
@@ -472,7 +472,7 @@ namespace PChecker.SystematicTesting
                     callback(iteration);
                 }
 
-                if (Strategy is FeedbackGuidedStrategy strategy)
+                if (Strategy is IFeedbackGuidedStrategy strategy)
                 {
                     strategy.ObserveRunningResults(runtime);
                 }

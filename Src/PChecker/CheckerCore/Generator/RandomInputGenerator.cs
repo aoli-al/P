@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using PChecker.SystematicTesting.Strategies.Feedback.Mutator;
 
 namespace PChecker.Random
 {
@@ -9,7 +10,7 @@ namespace PChecker.Random
     /// This class implements a JQF-style stream-based input generator.
     /// See more: https://github.com/rohanpadhye/JQF
     /// </summary>
-    public class StreamBasedValueGenerator : IRandomValueGenerator
+    public class RandomInputGenerator : IInputGenerator<RandomInputGenerator>
     {
         /// <summary>
         /// Device for generating random numbers.
@@ -27,16 +28,13 @@ namespace PChecker.Random
             return output;
         }
 
-
-        public uint Seed { get; set; }
-
         /// <summary>
         /// Create a stream based value generator with a random device as well
         /// as a pre-defined byte stream.
         /// </summary>
         /// <param name="random">The random device used to generate random values.</param>
         /// <param name="bytes">An optional pre-defined byte stream.</param>
-        public StreamBasedValueGenerator(System.Random random, MemoryStream? bytes)
+        public RandomInputGenerator(System.Random random, MemoryStream? bytes)
         {
             _random = random;
             if (bytes != null)
@@ -54,7 +52,7 @@ namespace PChecker.Random
         /// Create a stream based value generator using CheckerConfiguration.
         /// </summary>
         /// <param name="checkerConfiguration"></param>
-        public StreamBasedValueGenerator(CheckerConfiguration checkerConfiguration):
+        public RandomInputGenerator(CheckerConfiguration checkerConfiguration):
             this(new System.Random((int?)checkerConfiguration.RandomGeneratorSeed ?? Guid.NewGuid().GetHashCode()), null)
         {
         }
@@ -62,7 +60,7 @@ namespace PChecker.Random
         /// <summary>
         /// Create a default stream based value generator.
         /// </summary>
-        public StreamBasedValueGenerator():
+        public RandomInputGenerator():
             this(new System.Random(Guid.NewGuid().GetHashCode()), null)
         {
         }
@@ -72,7 +70,7 @@ namespace PChecker.Random
         /// Create a stream based value generator with an existing generator.
         /// </summary>
         /// <param name="other"></param>
-        public StreamBasedValueGenerator(StreamBasedValueGenerator other) : this(other._random, other._bytes)
+        public RandomInputGenerator(RandomInputGenerator other) : this(other._random, other._bytes)
         {
         }
 
@@ -146,6 +144,16 @@ namespace PChecker.Random
         public void SaveToFile(string path)
         {
             _bytes.WriteTo(new FileStream(path, FileMode.OpenOrCreate, FileAccess.Write));
+        }
+
+        public RandomInputGenerator Mutate()
+        {
+            return new RandomInputMutator().Mutate(this);
+        }
+
+        public RandomInputGenerator Copy()
+        {
+            return new RandomInputGenerator(this);
         }
     }
 }

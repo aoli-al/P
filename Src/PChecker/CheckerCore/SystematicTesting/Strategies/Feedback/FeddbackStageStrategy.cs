@@ -3,7 +3,9 @@ using PChecker.Random;
 namespace PChecker.SystematicTesting.Strategies.Feedback;
 
 
-internal class TwoStageFeedbackStrategy : FeedbackGuidedStrategy
+internal class TwoStageFeedbackStrategy<TInput, TSchedule> : FeedbackGuidedStrategy<TInput, TSchedule>
+    where TInput: IInputGenerator<TInput>, new()
+    where TSchedule: IScheduleGenerator<TSchedule>, new()
 {
 
     private int _scheduleMutationWithoutUpdates = 0;
@@ -32,15 +34,15 @@ internal class TwoStageFeedbackStrategy : FeedbackGuidedStrategy
         {
             _scheduleMutationWithoutUpdates = 0;
             return new StrategyGenerator(
-                Mutator.InputMutator.Mutate(prev.InputGenerator),
-                new StreamBasedValueGenerator(prev.ScheduleGenerator)
+                Generator.InputGenerator.Mutate(),
+                new TSchedule()
             );
         }
         else
         {
             return new StrategyGenerator(
-                new StreamBasedValueGenerator(prev.InputGenerator),
-                Mutator.ScheduleMutator.Mutate(prev.ScheduleGenerator)
+                Generator.InputGenerator.Copy(),
+                Generator.ScheduleGenerator.Mutate()
             );
         }
     }

@@ -59,13 +59,5 @@ namespace PChecker.Random
         /// than or equal to 0.0, and less than 1.0.
         /// </summary>
         public double NextDouble() => Random.NextDouble();
-
-        /// <summary>
-        /// Save random choices to file. Will be noop in RandomValueGenerator.
-        /// </summary>
-        /// <param name="path">Path of the file.</param>
-        public void SaveToFile(string path)
-        {
-        }
     }
 }

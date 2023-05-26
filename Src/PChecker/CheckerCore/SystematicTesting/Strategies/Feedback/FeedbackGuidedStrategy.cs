@@ -1,22 +1,25 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
+using System.Threading.Tasks;
 using PChecker.Actors;
 using PChecker.Coverage;
 using PChecker.Random;
 using PChecker.SystematicTesting.Operations;
 using PChecker.SystematicTesting.Strategies.Feedback.Mutator;
+using AsyncOperation = PChecker.SystematicTesting.Operations.AsyncOperation;
 
 namespace PChecker.SystematicTesting.Strategies.Feedback;
 
-record StrategyGenerator(StreamBasedValueGenerator InputGenerator, StreamBasedValueGenerator ScheduleGenerator);
 
-record StrategyMutator(IMutator InputMutator, IMutator ScheduleMutator);
-
-internal class FeedbackGuidedStrategy : ISchedulingStrategy
+internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrategy
+    where TInput: IInputGenerator<TInput>, new()
+    where TSchedule: IScheduleGenerator<TSchedule>, new()
 {
-    private StrategyGenerator _generator;
-    protected StrategyMutator Mutator = new StrategyMutator(new RandomMutator(), new RandomMutator());
+    protected record StrategyGenerator(TInput InputGenerator, TSchedule ScheduleGenerator);
+
+    protected StrategyGenerator Generator;
 
     private readonly int _maxScheduledSteps;
 
@@ -42,32 +45,22 @@ internal class FeedbackGuidedStrategy : ISchedulingStrategy
     {
         _maxScheduledSteps = checkerConfiguration.MaxFairSchedulingSteps;
         _checkerConfiguration = checkerConfiguration;
-        _generator = new StrategyGenerator(new StreamBasedValueGenerator(_checkerConfiguration),
-            new StreamBasedValueGenerator(_checkerConfiguration));
+        Generator = new StrategyGenerator(new TInput(), new TSchedule());
     }
 
     /// <inheritdoc/>
     public bool GetNextOperation(AsyncOperation current, IEnumerable<AsyncOperation> ops, out AsyncOperation next)
     {
         var enabledOperations = ops.Where(op => op.Status is AsyncOperationStatus.Enabled).ToList();
-        if (enabledOperations.Count == 0)
-        {
-            next = null;
-            return false;
-        }
-
-        var idx = _generator.ScheduleGenerator.Next(enabledOperations.Count);
-        next = enabledOperations[idx];
-
+        next = Generator.ScheduleGenerator.NextRandomOperation(enabledOperations);
         _scheduledSteps++;
-
-        return true;
+        return next != null;
     }
 
     /// <inheritdoc/>
     public bool GetNextBooleanChoice(AsyncOperation current, int maxValue, out bool next)
     {
-        next = _generator.InputGenerator.Next(maxValue) == 0;
+        next = Generator.InputGenerator.Next(maxValue) == 0;
 
         _scheduledSteps++;
 
@@ -77,7 +70,7 @@ internal class FeedbackGuidedStrategy : ISchedulingStrategy
     /// <inheritdoc/>
     public bool GetNextIntegerChoice(AsyncOperation current, int maxValue, out int next)
     {
-        next = _generator.InputGenerator.Next(maxValue);
+        next = Generator.InputGenerator.Next(maxValue);
         _scheduledSteps++;
         return true;
     }
@@ -134,7 +127,7 @@ internal class FeedbackGuidedStrategy : ISchedulingStrategy
         // TODO: implement real feedback.
         if (_visitedEvents.Merge(runtime.GetCoverageInfo().EventInfo))
         {
-            SavedGenerators.AddLast(_generator);
+            SavedGenerators.AddLast(Generator);
         }
     }
 
@@ -143,8 +136,7 @@ internal class FeedbackGuidedStrategy : ISchedulingStrategy
         if (SavedGenerators.Count == 0)
         {
             // Create a new input if no input is saved.
-            _generator = new StrategyGenerator(new StreamBasedValueGenerator(_checkerConfiguration),
-                new StreamBasedValueGenerator(_checkerConfiguration));
+            Generator = new StrategyGenerator(new TInput(), new TSchedule());
             return;
         }
         if (_numMutations == _maxMutations)
@@ -157,14 +149,11 @@ internal class FeedbackGuidedStrategy : ISchedulingStrategy
             _numMutations ++;
         }
         _currentNode ??= SavedGenerators.First;
-        _generator = MutateGenerator(_currentNode!.Value);
+        Generator = MutateGenerator(_currentNode!.Value);
     }
 
     protected virtual StrategyGenerator MutateGenerator(StrategyGenerator prev)
     {
-        return new StrategyGenerator(
-            Mutator.InputMutator.Mutate(prev.InputGenerator),
-            Mutator.ScheduleMutator.Mutate(prev.ScheduleGenerator)
-        );
+        return new StrategyGenerator(Generator.InputGenerator.Mutate(), Generator.ScheduleGenerator.Mutate());
     }
 }

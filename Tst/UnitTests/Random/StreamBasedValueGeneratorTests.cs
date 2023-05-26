@@ -29,7 +29,7 @@ namespace UnitTests.Random
         public void TestGeneratorGenerateExpectedValue()
         {
             var random = new ControlledRandom();
-            var generator = new StreamBasedValueGenerator(random, null);
+            var generator = new RandomInputGenerator(random, null);
             for (int i = 0; i < 10; i++)
             {
                 Assert.AreEqual(generator.Next(), i);
@@ -39,13 +39,13 @@ namespace UnitTests.Random
         [Test]
         public void TestGeneratorCopy()
         {
-            var generator = new StreamBasedValueGenerator();
+            var generator = new RandomInputGenerator();
             List<int> generated = new List<int>();
             for (int i = 0; i < 10; i++)
             {
                 generated.Add(generator.Next());
             }
-            var newGenerator = new StreamBasedValueGenerator(generator);
+            var newGenerator = new RandomInputGenerator(generator);
             for (int i = 0; i < 10; i++)
             {
                 Assert.AreEqual(generated[i], newGenerator.Next());
