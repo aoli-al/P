@@ -503,10 +503,6 @@ namespace PChecker.SystematicTesting
 
                     ConstructReproducableTrace(runtime);
                 }
-                if (iteration % 10 == 0)
-                {
-                    Logger.WriteLine($"..... Iter: {iteration}, covered states: {TestReport.CoverageInfo.EventInfo.ExploredNumState()}");
-                }
 
             }
             finally
@@ -516,6 +512,11 @@ namespace PChecker.SystematicTesting
                     // Restores the standard output and error streams.
                     Console.SetOut(stdOut);
                     Console.SetError(stdErr);
+                }
+
+                if (iteration % 10 == 0)
+                {
+                    Logger.WriteLine($"..... Iter: {iteration}, covered states: {TestReport.CoverageInfo.EventInfo.ExploredNumState()}");
                 }
 
                 if (!IsReplayModeEnabled && _checkerConfiguration.PerformFullExploration && runtime.Scheduler.BugFound)
