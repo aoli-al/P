@@ -5,6 +5,6 @@ namespace PChecker.Generator;
 
 internal interface IScheduleGenerator<T>: IGenerator<T>
 {
-    public AsyncOperation? NextRandomOperation(List<AsyncOperation> enabledOperations);
+    public AsyncOperation? NextRandomOperation(List<AsyncOperation> enabledOperations, AsyncOperation current);
 
 }

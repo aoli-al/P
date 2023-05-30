@@ -261,6 +261,14 @@ namespace PChecker.SystematicTesting
             {
                 Strategy = new TwoStageFeedbackStrategy<RandomInputGenerator, RandomScheduleGenerator>(_checkerConfiguration, new RandomInputGenerator(checkerConfiguration), new RandomScheduleGenerator(checkerConfiguration));
             }
+            else if (checkerConfiguration.SchedulingStrategy is "feedbackpct")
+            {
+                Strategy = new FeedbackGuidedStrategy<RandomInputGenerator, PCTScheduleGenerator>(_checkerConfiguration, new RandomInputGenerator(checkerConfiguration), new PCTScheduleGenerator(checkerConfiguration));
+            }
+            else if (checkerConfiguration.SchedulingStrategy is "2stagefeedbackpct")
+            {
+                Strategy = new TwoStageFeedbackStrategy<RandomInputGenerator, PCTScheduleGenerator>(_checkerConfiguration, new RandomInputGenerator(checkerConfiguration), new PCTScheduleGenerator(checkerConfiguration));
+            }
             else if (checkerConfiguration.SchedulingStrategy is "portfolio")
             {
                 Error.ReportAndExit("Portfolio testing strategy is only " +

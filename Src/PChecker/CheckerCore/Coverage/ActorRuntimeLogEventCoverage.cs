@@ -187,7 +187,7 @@ namespace PChecker.Coverage
         {
             if (Dequeued != null)
             {
-                EventCoverage.AddEventReceived(GetStateId(id.Type, stateName), Dequeued.GetType().FullName);
+                EventCoverage.AddEventReceived(GetStateId(id.Name, stateName), Dequeued.GetType().FullName);
                 Dequeued = null;
             }
         }
@@ -250,13 +250,13 @@ namespace PChecker.Coverage
         public void OnRaiseEvent(ActorId id, string stateName, Event e)
         {
             var eventName = e.GetType().FullName;
-            EventCoverage.AddEventSent(GetStateId(id.Type, stateName), eventName);
+            EventCoverage.AddEventSent(GetStateId(id.Name, stateName), eventName);
         }
 
         public void OnReceiveEvent(ActorId id, string stateName, Event e, bool wasBlocked)
         {
             var eventName = e.GetType().FullName;
-            EventCoverage.AddEventReceived(GetStateId(id.Type, stateName), eventName);
+            EventCoverage.AddEventReceived(GetStateId(id.Name, stateName), eventName);
         }
 
         public void OnSendEvent(ActorId targetActorId, string senderName, string senderType, string senderStateName,

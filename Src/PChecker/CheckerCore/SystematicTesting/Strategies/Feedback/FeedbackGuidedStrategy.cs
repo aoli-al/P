@@ -52,7 +52,7 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
     public bool GetNextOperation(AsyncOperation current, IEnumerable<AsyncOperation> ops, out AsyncOperation next)
     {
         var enabledOperations = ops.Where(op => op.Status is AsyncOperationStatus.Enabled).ToList();
-        next = Generator.ScheduleGenerator.NextRandomOperation(enabledOperations);
+        next = Generator.ScheduleGenerator.NextRandomOperation(enabledOperations, current);
         _scheduledSteps++;
         return next != null;
     }

@@ -23,7 +23,7 @@ internal class RandomScheduleGenerator: IScheduleGenerator<RandomScheduleGenerat
     {
     }
 
-    public AsyncOperation? NextRandomOperation(List<AsyncOperation> enabledOperations)
+    public AsyncOperation? NextRandomOperation(List<AsyncOperation> enabledOperations, AsyncOperation current)
     {
         if (enabledOperations.Count == 0)
         {

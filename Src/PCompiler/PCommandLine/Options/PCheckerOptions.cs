@@ -52,6 +52,8 @@ namespace Plang.Options
             schedulingGroup.AddArgument("sch-random", null, "Choose the random scheduling strategy (this is the default)", typeof(bool));
             schedulingGroup.AddArgument("sch-feedback", null, "Choose the feedback scheduling strategy", typeof(bool));
             schedulingGroup.AddArgument("sch-2stagefeedback", null, "Choose the 2 stage feedback scheduling strategy", typeof(bool));
+            schedulingGroup.AddArgument("sch-feedbackpct", null, "Choose the 2 stage feedback scheduling strategy", typeof(bool));
+            schedulingGroup.AddArgument("sch-2stagefeedbackpct", null, "Choose the 2 stage feedback scheduling strategy", typeof(bool));
             schedulingGroup.AddArgument("sch-probabilistic", "sp", "Choose the probabilistic scheduling strategy with given probability for each scheduling decision where the probability is " +
                                                                    "specified as the integer N in the equation 0.5 to the power of N.  So for N=1, the probability is 0.5, for N=2 the probability is 0.25, N=3 you get 0.125, etc.", typeof(uint));
             schedulingGroup.AddArgument("sch-pct", null, "Choose the PCT scheduling strategy with given maximum number of priority switch points", typeof(uint));
@@ -169,6 +171,8 @@ namespace Plang.Options
                 case "sch-2stagefeedback":
                     checkerConfiguration.SchedulingStrategy = option.LongName.Substring(4);
                     break;
+                case "sch-feedbackpct":
+                case "sch-2stagefeedbackpct":
                 case "sch-probabilistic":
                 case "sch-pct":
                 case "sch-fairpct":
@@ -268,7 +272,9 @@ namespace Plang.Options
             if (checkerConfiguration.SchedulingStrategy != "portfolio" &&
                 checkerConfiguration.SchedulingStrategy != "random" &&
                 checkerConfiguration.SchedulingStrategy != "feedback" &&
+                checkerConfiguration.SchedulingStrategy != "feedbackpct" &&
                 checkerConfiguration.SchedulingStrategy != "2stagefeedback" &&
+                checkerConfiguration.SchedulingStrategy != "2stagefeedbackpct" &&
                 checkerConfiguration.SchedulingStrategy != "pct" &&
                 checkerConfiguration.SchedulingStrategy != "fairpct" &&
                 checkerConfiguration.SchedulingStrategy != "probabilistic" &&
