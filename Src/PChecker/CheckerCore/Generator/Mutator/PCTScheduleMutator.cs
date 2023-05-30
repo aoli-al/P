@@ -10,7 +10,7 @@ internal class PCTScheduleMutator : IMutator<PCTScheduleGenerator>
     private System.Random _random = new();
     public PCTScheduleGenerator Mutate(PCTScheduleGenerator prev)
     {
-        return new PCTScheduleGenerator(prev.Random, MutateRandomChoices(prev.IntChoices), prev.MaxPrioritySwitchPoints);
+        return new PCTScheduleGenerator(prev.Random, MutateRandomChoices(prev.IntChoices), prev.MaxPrioritySwitchPoints, prev.MaxSchedulingSteps);
     }
 
     private RandomChoices<T> MutateRandomChoices<T> (RandomChoices<T> randomChoices)

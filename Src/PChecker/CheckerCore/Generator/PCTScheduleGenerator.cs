@@ -16,16 +16,19 @@ internal sealed class PCTScheduleGenerator: IScheduleGenerator<PCTScheduleGenera
     private readonly List<AsyncOperation> _prioritizedOperations = new();
     private readonly SortedSet<int> _priorityChangePoints = new();
     private int _scheduledSteps;
+    public int MaxSchedulingSteps;
 
-    public PCTScheduleGenerator(System.Random random, RandomChoices<int>? intChoices, int maxPrioritySwitchPoints)
+    public PCTScheduleGenerator(System.Random random, RandomChoices<int>? intChoices, int maxPrioritySwitchPoints, int maxSchedulingSteps)
     {
+        MaxSchedulingSteps = maxSchedulingSteps;
         IntChoices = intChoices != null ? new RandomChoices<int>(intChoices) : new RandomChoices<int>(random);
 
-        var scheduleSize = IntChoices.Next();
+        var scheduleSize = IntChoices.Next() % MaxSchedulingSteps;
         MaxPrioritySwitchPoints = maxPrioritySwitchPoints;
+        MaxSchedulingSteps = maxSchedulingSteps;
 
         var range = new List<int>();
-        for (var idx = 0; idx < scheduleSize; idx++)
+        for (var idx = 1; idx < scheduleSize; idx++)
         {
             range.Add(idx);
         }
@@ -51,7 +54,7 @@ internal sealed class PCTScheduleGenerator: IScheduleGenerator<PCTScheduleGenera
     }
 
     public PCTScheduleGenerator(CheckerConfiguration checkerConfiguration):
-        this(new System.Random((int?)checkerConfiguration.RandomGeneratorSeed ?? Guid.NewGuid().GetHashCode()), null, checkerConfiguration.StrategyBound)
+        this(new System.Random((int?)checkerConfiguration.RandomGeneratorSeed ?? Guid.NewGuid().GetHashCode()), null, checkerConfiguration.StrategyBound, checkerConfiguration.MaxUnfairSchedulingSteps)
     {
     }
 
@@ -62,11 +65,12 @@ internal sealed class PCTScheduleGenerator: IScheduleGenerator<PCTScheduleGenera
 
     public PCTScheduleGenerator Copy()
     {
-        return new PCTScheduleGenerator(Random, IntChoices, MaxPrioritySwitchPoints);
+        return new PCTScheduleGenerator(Random, IntChoices, MaxPrioritySwitchPoints, MaxSchedulingSteps);
     }
 
     public AsyncOperation? NextRandomOperation(List<AsyncOperation> enabledOperations, AsyncOperation current)
     {
+        _scheduledSteps += 1;
         if (enabledOperations.Count == 0)
         {
             return null;
@@ -76,7 +80,6 @@ internal sealed class PCTScheduleGenerator: IScheduleGenerator<PCTScheduleGenera
         {
             return enabledOperations[0];
         }
-
         return GetPrioritizedOperation(enabledOperations, current);
     }
 
