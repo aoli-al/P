@@ -5,19 +5,19 @@ using System.Linq;
 using System.Threading.Tasks;
 using PChecker.Actors;
 using PChecker.Coverage;
+using PChecker.Generator;
 using PChecker.Random;
 using PChecker.SystematicTesting.Operations;
-using PChecker.SystematicTesting.Strategies.Feedback.Mutator;
 using AsyncOperation = PChecker.SystematicTesting.Operations.AsyncOperation;
 
 namespace PChecker.SystematicTesting.Strategies.Feedback;
 
 
 internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrategy
-    where TInput: IInputGenerator<TInput>, new()
-    where TSchedule: IScheduleGenerator<TSchedule>, new()
+    where TInput: IInputGenerator<TInput>
+    where TSchedule: IScheduleGenerator<TSchedule>
 {
-    protected record StrategyGenerator(TInput InputGenerator, TSchedule ScheduleGenerator);
+    public record StrategyGenerator(TInput InputGenerator, TSchedule ScheduleGenerator);
 
     protected StrategyGenerator Generator;
 
@@ -41,11 +41,11 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
     /// <summary>
     /// Initializes a new instance of the <see cref="FeedbackGuidedStrategy"/> class.
     /// </summary>
-    public FeedbackGuidedStrategy(CheckerConfiguration checkerConfiguration)
+    public FeedbackGuidedStrategy(CheckerConfiguration checkerConfiguration, TInput input, TSchedule schedule)
     {
         _maxScheduledSteps = checkerConfiguration.MaxFairSchedulingSteps;
         _checkerConfiguration = checkerConfiguration;
-        Generator = new StrategyGenerator(new TInput(), new TSchedule());
+        Generator = new StrategyGenerator(input, schedule);
     }
 
     /// <inheritdoc/>
@@ -135,9 +135,8 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
     {
         if (SavedGenerators.Count == 0)
         {
-            // Create a new input if no input is saved.
-            Generator = new StrategyGenerator(new TInput(), new TSchedule());
-            return;
+            // Mutate current input if no input is saved.
+            Generator = MutateGenerator(Generator);
         }
         if (_numMutations == _maxMutations)
         {

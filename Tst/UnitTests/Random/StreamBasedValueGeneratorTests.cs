@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using NUnit.Framework;
+using PChecker.Generator;
 using PChecker.Random;
 
 namespace UnitTests.Random
@@ -18,6 +19,11 @@ namespace UnitTests.Random
                 return i++;
             }
 
+            public override double NextDouble()
+            {
+                return i++ * 0.1;
+            }
+
             public override void NextBytes(byte[] buffer)
             {
                 var bytes = BitConverter.GetBytes(i++);
@@ -29,10 +35,16 @@ namespace UnitTests.Random
         public void TestGeneratorGenerateExpectedValue()
         {
             var random = new ControlledRandom();
-            var generator = new RandomInputGenerator(random, null);
+            var generator = new RandomInputGenerator(random, null, null);
             for (int i = 0; i < 10; i++)
             {
                 Assert.AreEqual(generator.Next(), i);
+            }
+
+            for (int i = 10; i < 20; i++)
+            {
+                Assert.AreEqual(generator.NextDouble(), i * 0.1);
+
             }
         }
 

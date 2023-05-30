@@ -16,6 +16,7 @@ using System.Xml;
 using PChecker.Actors;
 using PChecker.Actors.Logging;
 using PChecker.Coverage;
+using PChecker.Generator;
 using PChecker.IO;
 using PChecker.IO.Debugging;
 using PChecker.IO.Logging;
@@ -254,11 +255,11 @@ namespace PChecker.SystematicTesting
             }
             else if (checkerConfiguration.SchedulingStrategy is "feedback")
             {
-                Strategy = new FeedbackGuidedStrategy<RandomInputGenerator, RandomScheduleGenerator>(_checkerConfiguration);
+                Strategy = new FeedbackGuidedStrategy<RandomInputGenerator, RandomScheduleGenerator>(_checkerConfiguration, new RandomInputGenerator(checkerConfiguration), new RandomScheduleGenerator(checkerConfiguration));
             }
             else if (checkerConfiguration.SchedulingStrategy is "2stagefeedback")
             {
-                Strategy = new TwoStageFeedbackStrategy<RandomInputGenerator, RandomScheduleGenerator>(_checkerConfiguration);
+                Strategy = new TwoStageFeedbackStrategy<RandomInputGenerator, RandomScheduleGenerator>(_checkerConfiguration, new RandomInputGenerator(checkerConfiguration), new RandomScheduleGenerator(checkerConfiguration));
             }
             else if (checkerConfiguration.SchedulingStrategy is "portfolio")
             {

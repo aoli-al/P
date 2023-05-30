@@ -1,16 +1,17 @@
+using PChecker.Generator;
 using PChecker.Random;
 
 namespace PChecker.SystematicTesting.Strategies.Feedback;
 
 
 internal class TwoStageFeedbackStrategy<TInput, TSchedule> : FeedbackGuidedStrategy<TInput, TSchedule>
-    where TInput: IInputGenerator<TInput>, new()
-    where TSchedule: IScheduleGenerator<TSchedule>, new()
+    where TInput: IInputGenerator<TInput>
+    where TSchedule: IScheduleGenerator<TSchedule>
 {
 
     private int _scheduleMutationWithoutUpdates = 0;
     private readonly int _maxSchedulMutationsWithoutUpdates = 100;
-    public TwoStageFeedbackStrategy(CheckerConfiguration checkerConfiguration) : base(checkerConfiguration)
+    public TwoStageFeedbackStrategy(CheckerConfiguration checkerConfiguration, TInput input, TSchedule schedule) : base(checkerConfiguration, input, schedule)
     {
     }
 
@@ -35,7 +36,7 @@ internal class TwoStageFeedbackStrategy<TInput, TSchedule> : FeedbackGuidedStrat
             _scheduleMutationWithoutUpdates = 0;
             return new StrategyGenerator(
                 Generator.InputGenerator.Mutate(),
-                new TSchedule()
+                Generator.ScheduleGenerator.Mutate()
             );
         }
         else

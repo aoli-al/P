@@ -1,6 +1,4 @@
-using PChecker.Random;
-
-namespace PChecker.SystematicTesting.Strategies.Feedback.Mutator;
+namespace PChecker.Generator.Mutator;
 
 public interface IMutator<T>
 {

@@ -216,6 +216,18 @@ namespace PChecker.SystematicTesting.Strategies.Special
                         ErrorText = "Trace is not reproducible: next step is not a nondeterministic integer choice.";
                         throw new InvalidOperationException(ErrorText);
                     }
+
+                    if (nextStep.IntegerChoice > maxValue)
+                    {
+                        ErrorText = $"Trace is not reproducible: choice value ({nextStep.IntegerChoice}) is greater than maxValue ({maxValue}).";
+                        throw new InvalidOperationException(ErrorText);
+                    }
+
+                    if (nextStep.IntegerChoice < 0)
+                    {
+                        ErrorText = $"Trace is not reproducible: choice value ({nextStep.IntegerChoice}) is less than 0.";
+                        throw new InvalidOperationException(ErrorText);
+                    }
                 }
                 catch (InvalidOperationException ex)
                 {

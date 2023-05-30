@@ -1,28 +1,27 @@
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
+using PChecker.Generator.Mutator;
+using PChecker.Generator.Object;
 using PChecker.SystematicTesting.Operations;
-using PChecker.SystematicTesting.Strategies.Feedback.Mutator;
 
-namespace PChecker.Random;
+namespace PChecker.Generator;
 
 internal class RandomScheduleGenerator: IScheduleGenerator<RandomScheduleGenerator>
 {
-    private readonly System.Random _random = new();
+    internal readonly System.Random Random;
 
-    public List<int> Choices = new();
-    private int _index = 0;
+    public RandomChoices<int> IntChoices;
 
-
-    public RandomScheduleGenerator(List<int> choices)
+    public RandomScheduleGenerator(System.Random random, RandomChoices<int>? intChoices)
     {
-        Choices = choices;
+        Random = random;
+        IntChoices = intChoices != null ? new RandomChoices<int>(intChoices) : new RandomChoices<int>(Random);
     }
 
-    public RandomScheduleGenerator()
+    public RandomScheduleGenerator(CheckerConfiguration checkerConfiguration):
+        this(new System.Random((int?)checkerConfiguration.RandomGeneratorSeed ?? Guid.NewGuid().GetHashCode()) , null)
     {
     }
-
 
     public AsyncOperation? NextRandomOperation(List<AsyncOperation> enabledOperations)
     {
@@ -36,11 +35,7 @@ internal class RandomScheduleGenerator: IScheduleGenerator<RandomScheduleGenerat
             return enabledOperations[0];
         }
 
-        if (_index >= Choices.Count)
-        {
-            Choices.Add(_random.Next(enabledOperations.Count));
-        }
-        return enabledOperations[Choices[_index++] % enabledOperations.Count];
+        return enabledOperations[IntChoices.Next() % enabledOperations.Count];
     }
 
     public RandomScheduleGenerator Mutate()
@@ -50,6 +45,6 @@ internal class RandomScheduleGenerator: IScheduleGenerator<RandomScheduleGenerat
 
     public RandomScheduleGenerator Copy()
     {
-        return new RandomScheduleGenerator(Choices);
+        return new RandomScheduleGenerator(Random, IntChoices);
     }
 }

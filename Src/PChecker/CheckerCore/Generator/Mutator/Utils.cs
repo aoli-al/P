@@ -1,6 +1,6 @@
 using System;
 
-namespace PChecker.SystematicTesting.Strategies.Feedback.Mutator;
+namespace PChecker.Generator.Mutator;
 
 public class Utils
 {

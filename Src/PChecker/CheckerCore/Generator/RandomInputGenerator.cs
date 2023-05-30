@@ -1,9 +1,10 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using PChecker.SystematicTesting.Strategies.Feedback.Mutator;
+using PChecker.Generator.Mutator;
+using PChecker.Generator.Object;
 
-namespace PChecker.Random
+namespace PChecker.Generator
 {
 
     /// <summary>
@@ -15,36 +16,16 @@ namespace PChecker.Random
         /// <summary>
         /// Device for generating random numbers.
         /// </summary>
-        private readonly System.Random _random;
+        internal readonly System.Random Random;
 
-        private readonly MemoryStream _bytes = new();
+        internal RandomChoices<int> IntChoices;
+        internal RandomChoices<double> DoubleChoices;
 
-        public byte[] GetBytesCopy()
+        public RandomInputGenerator(System.Random random, RandomChoices<int>? intChoices, RandomChoices<double>? doubleChoices)
         {
-            long pos = _bytes.Position;
-            _bytes.Position = 0;
-            byte[] output = new byte[_bytes.Length];
-            Debug.Assert(_bytes.Read(output) == _bytes.Length);
-            return output;
-        }
-
-        /// <summary>
-        /// Create a stream based value generator with a random device as well
-        /// as a pre-defined byte stream.
-        /// </summary>
-        /// <param name="random">The random device used to generate random values.</param>
-        /// <param name="bytes">An optional pre-defined byte stream.</param>
-        public RandomInputGenerator(System.Random random, MemoryStream? bytes)
-        {
-            _random = random;
-            if (bytes != null)
-            {
-                // Reset the pos.
-                bytes.Position = 0;
-                bytes.CopyTo(_bytes);
-                // When a new stream is created we want to read from beginning.
-                _bytes.Position = 0;
-            }
+            Random = random;
+            IntChoices = intChoices != null ? new RandomChoices<int>(intChoices) : new RandomChoices<int>(Random);
+            DoubleChoices = doubleChoices != null ? new RandomChoices<double>(doubleChoices) : new RandomChoices<double>(Random);
         }
 
 
@@ -53,7 +34,7 @@ namespace PChecker.Random
         /// </summary>
         /// <param name="checkerConfiguration"></param>
         public RandomInputGenerator(CheckerConfiguration checkerConfiguration):
-            this(new System.Random((int?)checkerConfiguration.RandomGeneratorSeed ?? Guid.NewGuid().GetHashCode()), null)
+            this(new System.Random((int?)checkerConfiguration.RandomGeneratorSeed ?? Guid.NewGuid().GetHashCode()), null, null)
         {
         }
 
@@ -61,7 +42,7 @@ namespace PChecker.Random
         /// Create a default stream based value generator.
         /// </summary>
         public RandomInputGenerator():
-            this(new System.Random(Guid.NewGuid().GetHashCode()), null)
+            this(new System.Random(Guid.NewGuid().GetHashCode()), null, null)
         {
         }
 
@@ -70,7 +51,7 @@ namespace PChecker.Random
         /// Create a stream based value generator with an existing generator.
         /// </summary>
         /// <param name="other"></param>
-        public RandomInputGenerator(RandomInputGenerator other) : this(other._random, other._bytes)
+        public RandomInputGenerator(RandomInputGenerator other) : this(other.Random, other.IntChoices, other.DoubleChoices)
         {
         }
 
@@ -79,19 +60,7 @@ namespace PChecker.Random
         /// </summary>
         public int Next()
         {
-            long missingBytes = sizeof(int) - (_bytes.Length - _bytes.Position);
-            // Make sure the buffer has enough bytes to read.
-            if (missingBytes > 0)
-            {
-                AppendBytes(missingBytes);
-            }
-            var reader = new BinaryReader(_bytes);
-            int value = reader.ReadInt32();
-            while (value < 0)
-            {
-                value += int.MaxValue;
-            }
-            return value;
+            return IntChoices.Next();
         }
 
 
@@ -102,6 +71,15 @@ namespace PChecker.Random
         public int Next(int maxValue)
         {
             var value = maxValue == 0 ? 0 : Next() % maxValue;
+            if (value == 0)
+            {
+                Console.WriteLine("0 Generated!!!!!");
+            }
+            else
+            {
+                Console.WriteLine("none 0 Generated!!!!!");
+            }
+
             return value;
         }
 
@@ -111,39 +89,7 @@ namespace PChecker.Random
         /// </summary>
         public double NextDouble()
         {
-            long missingBytes = sizeof(double) - (_bytes.Length - _bytes.Position);
-            // Make sure the buffer has enough bytes to read.
-            if (missingBytes > 0)
-            {
-                AppendBytes(missingBytes);
-            }
-            var reader = new BinaryReader(_bytes);
-            return reader.ReadDouble();
-        }
-
-        /// <summary>
-        /// Add missing bytes to the underlying byte stream.
-        /// This Method automatically reset the position pointer so that
-        /// the MemoryStream will read the new generated bytes.
-        /// </summary>
-        /// <param name="size"> Number of bytes to be generated. </param>
-        private void AppendBytes(long size)
-        {
-            var originPosition = _bytes.Position;
-            byte[] newBytes = new byte[size];
-            _random.NextBytes(newBytes);
-            _bytes.Write(newBytes);
-            _bytes.Position = originPosition;
-
-        }
-
-        /// <summary>
-        /// Save byte stream to file.
-        /// </summary>
-        /// <param name="path">Path of the file.</param>
-        public void SaveToFile(string path)
-        {
-            _bytes.WriteTo(new FileStream(path, FileMode.OpenOrCreate, FileAccess.Write));
+            return DoubleChoices.Next();
         }
 
         public RandomInputGenerator Mutate()

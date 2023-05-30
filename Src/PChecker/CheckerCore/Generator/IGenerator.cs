@@ -1,4 +1,4 @@
-namespace PChecker.Random;
+namespace PChecker.Generator;
 
 public interface IGenerator<T>
 {

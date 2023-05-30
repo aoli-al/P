@@ -1,9 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using PChecker.Random;
+using PChecker.Generator.Object;
 
-namespace PChecker.SystematicTesting.Strategies.Feedback.Mutator;
+namespace PChecker.Generator.Mutator;
 
 internal class RandomScheduleMutator : IMutator<RandomScheduleGenerator>
 {
@@ -12,25 +11,30 @@ internal class RandomScheduleMutator : IMutator<RandomScheduleGenerator>
     private System.Random _random = new();
     public RandomScheduleGenerator Mutate(RandomScheduleGenerator prev)
     {
-        int mutations = Utils.SampleGeometric(_meanMutationCount, _random);
+        return new RandomScheduleGenerator(prev.Random, MutateRandomChoices(prev.IntChoices));
+    }
 
-        List<int> newChoices = new List<int>(prev.Choices);
+    private RandomChoices<T> MutateRandomChoices<T> (RandomChoices<T> randomChoices)
+        where T: IConvertible
+    {
+        RandomChoices<T> newChoices = new RandomChoices<T>(randomChoices);
+        int mutations = Utils.SampleGeometric(_meanMutationCount, _random);
 
         while (mutations-- > 0)
         {
-            int offset = _random.Next(newChoices.Count);
+            int offset = _random.Next(newChoices.Data.Count);
             int mutationSize = Utils.SampleGeometric(_meanMutationSize, _random);
-            for (int i = 0; i < offset + mutationSize; i++)
+            for (int i = 0; i < offset + mutations; i++)
             {
-                if (i + offset >= newChoices.Count)
+                if (i >= newChoices.Data.Count)
                 {
                     break;
                 }
 
-                newChoices[i + offset] = _random.Next();
+                newChoices.Data[i] = newChoices.GenerateNew();
             }
         }
 
-        return new RandomScheduleGenerator(newChoices);
+        return newChoices;
     }
 }
