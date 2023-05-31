@@ -131,6 +131,11 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
         }
     }
 
+    public int TotalSavedInputs()
+    {
+        return SavedGenerators.Count;
+    }
+
     private void PrepareNextInput()
     {
         if (SavedGenerators.Count == 0)

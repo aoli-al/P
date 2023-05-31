@@ -526,6 +526,10 @@ namespace PChecker.SystematicTesting
                 if (iteration % 10 == 0)
                 {
                     Logger.WriteLine($"..... Iter: {iteration}, covered states: {TestReport.CoverageInfo.EventInfo.ExploredNumState()}");
+                    if (Strategy is IFeedbackGuidedStrategy s)
+                    {
+                        Logger.WriteLine($"..... Total saved: {s.TotalSavedInputs()}");
+                    }
                 }
 
                 if (!IsReplayModeEnabled && _checkerConfiguration.PerformFullExploration && runtime.Scheduler.BugFound)
