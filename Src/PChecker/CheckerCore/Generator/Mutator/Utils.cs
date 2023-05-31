@@ -17,7 +17,7 @@ public class Utils
         while (mutations-- > 0)
         {
             int offset = random.Next(newChoices.Data.Count);
-            int mutationSize = Utils.SampleGeometric(meanMutationSize, random.NextDouble());
+            int mutationSize = Utils.SampleGeometric(1.0f / meanMutationSize, random.NextDouble());
             for (int i = 0; i < offset + mutationSize; i++)
             {
                 if (i >= newChoices.Data.Count)
