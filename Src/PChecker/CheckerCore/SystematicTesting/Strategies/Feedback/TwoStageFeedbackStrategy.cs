@@ -10,7 +10,7 @@ internal class TwoStageFeedbackStrategy<TInput, TSchedule> : FeedbackGuidedStrat
 {
 
     private int _scheduleMutationWithoutUpdates = 0;
-    private readonly int _maxSchedulMutationsWithoutUpdates = 100;
+    private readonly int _maxSchedulMutationsWithoutUpdates = 50;
     public TwoStageFeedbackStrategy(CheckerConfiguration checkerConfiguration, TInput input, TSchedule schedule) : base(checkerConfiguration, input, schedule)
     {
     }

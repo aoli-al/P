@@ -8,64 +8,40 @@ using PChecker.SystematicTesting.Operations;
 
 namespace PChecker.Generator;
 
-internal sealed class PCTScheduleGenerator: IScheduleGenerator<PCTScheduleGenerator>
+internal sealed class PctScheduleGenerator: IScheduleGenerator<PctScheduleGenerator>
 {
     public System.Random Random;
-    public RandomChoices<int> IntChoices;
-    public readonly int MaxPrioritySwitchPoints;
+    public RandomChoices<int> PriorityChoices;
+    public RandomChoices<double> SwitchPointChoices;
     private readonly List<AsyncOperation> _prioritizedOperations = new();
-    private readonly SortedSet<int> _priorityChangePoints = new();
+    private int _nextPriorityChangePoint;
     private int _scheduledSteps;
     public int MaxSchedulingSteps;
+    private readonly double _switchPointProbability = 0.01;
 
-    public PCTScheduleGenerator(System.Random random, RandomChoices<int>? intChoices, int maxPrioritySwitchPoints, int maxSchedulingSteps)
+    public PctScheduleGenerator(System.Random random, RandomChoices<int>? intChoices, RandomChoices<double>? switchPointChoices)
     {
-        MaxSchedulingSteps = maxSchedulingSteps;
-        IntChoices = intChoices != null ? new RandomChoices<int>(intChoices) : new RandomChoices<int>(random);
+        Random = random;
+        PriorityChoices = intChoices != null ? new RandomChoices<int>(intChoices) : new RandomChoices<int>(random);
+        SwitchPointChoices = switchPointChoices != null ? new RandomChoices<double>(switchPointChoices) :
+            new RandomChoices<double>(random);
 
-        var scheduleSize = IntChoices.Next() % MaxSchedulingSteps;
-        MaxPrioritySwitchPoints = maxPrioritySwitchPoints;
-        MaxSchedulingSteps = maxSchedulingSteps;
-
-        var range = new List<int>();
-        for (var idx = 1; idx < scheduleSize; idx++)
-        {
-            range.Add(idx);
-        }
-
-        foreach (var point in Shuffle(range).Take(maxPrioritySwitchPoints))
-        {
-            _priorityChangePoints.Add(point);
-        }
+        _nextPriorityChangePoint = Utils.SampleGeometric(_switchPointProbability, SwitchPointChoices.Next());
     }
 
-    private IList<int> Shuffle(IList<int> list)
-    {
-        var result = new List<int>(list);
-        for (var idx = result.Count - 1; idx >= 1; idx--)
-        {
-            var point = IntChoices.Next() % list.Count;
-            var temp = result[idx];
-            result[idx] = result[point];
-            result[point] = temp;
-        }
-
-        return result;
-    }
-
-    public PCTScheduleGenerator(CheckerConfiguration checkerConfiguration):
-        this(new System.Random((int?)checkerConfiguration.RandomGeneratorSeed ?? Guid.NewGuid().GetHashCode()), null, checkerConfiguration.StrategyBound, checkerConfiguration.MaxUnfairSchedulingSteps)
+    public PctScheduleGenerator(CheckerConfiguration checkerConfiguration):
+        this(new System.Random((int?)checkerConfiguration.RandomGeneratorSeed ?? Guid.NewGuid().GetHashCode()), null, null)
     {
     }
 
-    public PCTScheduleGenerator Mutate()
+    public PctScheduleGenerator Mutate()
     {
-            return new PCTScheduleMutator().Mutate(this);
+        return new PCTScheduleMutator().Mutate(this);
     }
 
-    public PCTScheduleGenerator Copy()
+    public PctScheduleGenerator Copy()
     {
-        return new PCTScheduleGenerator(Random, IntChoices, MaxPrioritySwitchPoints, MaxSchedulingSteps);
+        return new PctScheduleGenerator(Random, PriorityChoices, SwitchPointChoices);
     }
 
     public AsyncOperation? NextRandomOperation(List<AsyncOperation> enabledOperations, AsyncOperation current)
@@ -73,13 +49,13 @@ internal sealed class PCTScheduleGenerator: IScheduleGenerator<PCTScheduleGenera
         _scheduledSteps += 1;
         if (enabledOperations.Count == 0)
         {
+            if (_nextPriorityChangePoint == _scheduledSteps)
+            {
+                MovePriorityChangePointForward();
+            }
             return null;
         }
 
-        if (enabledOperations.Count == 1)
-        {
-            return enabledOperations[0];
-        }
         return GetPrioritizedOperation(enabledOperations, current);
     }
 
@@ -93,12 +69,12 @@ internal sealed class PCTScheduleGenerator: IScheduleGenerator<PCTScheduleGenera
 
         foreach (var op in ops.Where(op => !_prioritizedOperations.Contains(op)))
         {
-            var mIndex = IntChoices.Next() % _prioritizedOperations.Count + 1;
+            var mIndex = PriorityChoices.Next() % _prioritizedOperations.Count + 1;
             _prioritizedOperations.Insert(mIndex, op);
             Debug.WriteLine("<PCTLog> Detected new operation '{0}' at index '{1}'.", op.Id, mIndex);
         }
 
-        if (_priorityChangePoints.Contains(_scheduledSteps))
+        if (_nextPriorityChangePoint == _scheduledSteps)
         {
             if (ops.Count == 1)
             {
@@ -110,6 +86,7 @@ internal sealed class PCTScheduleGenerator: IScheduleGenerator<PCTScheduleGenera
                 _prioritizedOperations.Remove(priority);
                 _prioritizedOperations.Add(priority);
                 Debug.WriteLine("<PCTLog> Operation '{0}' changes to lowest priority.", priority);
+                _nextPriorityChangePoint += Utils.SampleGeometric(_switchPointProbability, SwitchPointChoices.Next());
             }
         }
 
@@ -151,15 +128,8 @@ internal sealed class PCTScheduleGenerator: IScheduleGenerator<PCTScheduleGenera
 
     private void MovePriorityChangePointForward()
     {
-        _priorityChangePoints.Remove(_scheduledSteps);
-        var newPriorityChangePoint = _scheduledSteps + 1;
-        while (_priorityChangePoints.Contains(newPriorityChangePoint))
-        {
-            newPriorityChangePoint++;
-        }
-
-        _priorityChangePoints.Add(newPriorityChangePoint);
-        Debug.WriteLine("<PCTLog> Moving priority change to '{0}'.", newPriorityChangePoint);
+        _nextPriorityChangePoint += 1;
+        Debug.WriteLine("<PCTLog> Moving priority change to '{0}'.", _nextPriorityChangePoint);
     }
 
 
