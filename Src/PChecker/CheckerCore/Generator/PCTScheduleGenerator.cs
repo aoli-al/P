@@ -108,7 +108,7 @@ internal sealed class PctScheduleGenerator: IScheduleGenerator<PctScheduleGenera
             }
         }
 
-        return ops.First(op => op.Equals(prioritizedSchedulable));
+        return prioritizedSchedulable;
     }
 
     private AsyncOperation GetHighestPriorityEnabledOperation(IEnumerable<AsyncOperation> choices)

@@ -12,7 +12,7 @@ public class Utils
         where T: IConvertible
     {
         RandomChoices<T> newChoices = new RandomChoices<T>(randomChoices);
-        int mutations = Utils.SampleGeometric(meanMutationCount, random.NextDouble());
+        int mutations = Utils.SampleGeometric(1.0f / meanMutationCount, random.NextDouble());
 
         while (mutations-- > 0)
         {
