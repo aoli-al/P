@@ -9,8 +9,10 @@ internal class TwoStageFeedbackStrategy<TInput, TSchedule> : FeedbackGuidedStrat
     where TSchedule: IScheduleGenerator<TSchedule>
 {
 
-    private int _scheduleMutationWithoutUpdates = 0;
-    private readonly int _maxSchedulMutationsWithoutUpdates = 50;
+    private int _numScheduleMutationWithoutNewSaved = 0;
+
+    // This number should be less than `FeedbackGuidedStrategy._maxMutationsWithoutNewSaved`
+    private readonly int _maxScheduleMutationsWithoutNewSaved = 5;
     public TwoStageFeedbackStrategy(CheckerConfiguration checkerConfiguration, TInput input, TSchedule schedule) : base(checkerConfiguration, input, schedule)
     {
     }
@@ -21,30 +23,34 @@ internal class TwoStageFeedbackStrategy<TInput, TSchedule> : FeedbackGuidedStrat
         base.ObserveRunningResults(runtime);
         if (SavedGenerators.Count != numSavedInput)
         {
-            _scheduleMutationWithoutUpdates = 0;
+            _numScheduleMutationWithoutNewSaved = 0;
         }
         else
         {
-            _scheduleMutationWithoutUpdates += 1;
+            _numScheduleMutationWithoutNewSaved += 1;
         }
+    }
+
+    protected override void MoveToNextInput()
+    {
+        base.MoveToNextInput();
+        _numScheduleMutationWithoutNewSaved = 0;
     }
 
     protected override StrategyGenerator MutateGenerator(StrategyGenerator prev)
     {
-        if (_scheduleMutationWithoutUpdates > _maxSchedulMutationsWithoutUpdates)
+        if (_numScheduleMutationWithoutNewSaved > _maxScheduleMutationsWithoutNewSaved)
         {
-            _scheduleMutationWithoutUpdates = 0;
+            _numScheduleMutationWithoutNewSaved = 0;
             return new StrategyGenerator(
                 Generator.InputGenerator.Mutate(),
-                Generator.ScheduleGenerator.Mutate()
+                // do not mutate schedule to save time?
+                Generator.ScheduleGenerator.Copy()
             );
         }
-        else
-        {
-            return new StrategyGenerator(
-                Generator.InputGenerator.Copy(),
-                Generator.ScheduleGenerator.Mutate()
-            );
-        }
+        return new StrategyGenerator(
+            Generator.InputGenerator.Copy(),
+            Generator.ScheduleGenerator.Mutate()
+        );
     }
 }

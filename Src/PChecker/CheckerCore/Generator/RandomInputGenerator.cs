@@ -71,15 +71,6 @@ namespace PChecker.Generator
         public int Next(int maxValue)
         {
             var value = maxValue == 0 ? 0 : Next() % maxValue;
-            if (value == 0)
-            {
-                Console.WriteLine("0 Generated!!!!!");
-            }
-            else
-            {
-                Console.WriteLine("none 0 Generated!!!!!");
-            }
-
             return value;
         }
 

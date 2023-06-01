@@ -31,9 +31,9 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
 
     protected readonly List<StrategyGenerator> SavedGenerators = new();
 
-    private readonly int _maxMutationsWithoutNewInput = 10;
+    private readonly int _maxMutationsWithoutNewSaved = 20;
 
-    private int _numMutationsWithoutNewInput = 0;
+    private int _numMutationsWithoutNewSaved = 0;
 
     private int _currentInputIndex = 0;
 
@@ -133,7 +133,7 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
         if (_visitedEvents.Merge(runtime.GetCoverageInfo().EventInfo))
         {
             SavedGenerators.Add(Generator);
-            _numMutationsWithoutNewInput = 0;
+            _numMutationsWithoutNewSaved = 0;
         }
     }
 
@@ -150,14 +150,13 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
             Generator = MutateGenerator(Generator);
             return;
         }
-        if (_numMutationsWithoutNewInput >= _maxMutationsWithoutNewInput)
+        if (_numMutationsWithoutNewSaved >= _maxMutationsWithoutNewSaved)
         {
-            _currentInputIndex += 1;
-            _numMutationsWithoutNewInput = 0;
+            MoveToNextInput();
         }
         else
         {
-            _numMutationsWithoutNewInput ++;
+            _numMutationsWithoutNewSaved ++;
         }
 
         if (_currentInputIndex >= SavedGenerators.Count)
@@ -165,6 +164,12 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
             _currentInputIndex = 0;
         }
         Generator = MutateGenerator(SavedGenerators[_currentInputIndex]);
+    }
+
+    protected virtual void MoveToNextInput()
+    {
+        _currentInputIndex += 1;
+        _numMutationsWithoutNewSaved = 0;
     }
 
 
