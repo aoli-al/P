@@ -29,13 +29,18 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
 
     private readonly EventCoverage _visitedEvents = new();
 
-    protected readonly LinkedList<StrategyGenerator> SavedGenerators = new();
+    protected readonly List<StrategyGenerator> SavedGenerators = new();
 
-    private readonly int _maxMutations = 50;
+    private readonly int _maxMutationsWithoutNewInput = 10;
 
-    private int _numMutations = 0;
+    private int _numMutationsWithoutNewInput = 0;
 
-    private LinkedListNode<StrategyGenerator>? _currentNode = null;
+    private int _currentInputIndex = 0;
+
+    public int CurrentInputIndex()
+    {
+        return _currentInputIndex;
+    }
 
 
     /// <summary>
@@ -127,7 +132,8 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
         // TODO: implement real feedback.
         if (_visitedEvents.Merge(runtime.GetCoverageInfo().EventInfo))
         {
-            SavedGenerators.AddLast(Generator);
+            SavedGenerators.Add(Generator);
+            _numMutationsWithoutNewInput = 0;
         }
     }
 
@@ -142,19 +148,25 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
         {
             // Mutate current input if no input is saved.
             Generator = MutateGenerator(Generator);
+            return;
         }
-        if (_numMutations == _maxMutations)
+        if (_numMutationsWithoutNewInput >= _maxMutationsWithoutNewInput)
         {
-            _currentNode = _currentNode?.Next;
-            _numMutations = 0;
+            _currentInputIndex += 1;
+            _numMutationsWithoutNewInput = 0;
         }
         else
         {
-            _numMutations ++;
+            _numMutationsWithoutNewInput ++;
         }
-        _currentNode ??= SavedGenerators.First;
-        Generator = MutateGenerator(_currentNode!.Value);
+
+        if (_currentInputIndex >= SavedGenerators.Count)
+        {
+            _currentInputIndex = 0;
+        }
+        Generator = MutateGenerator(SavedGenerators[_currentInputIndex]);
     }
+
 
     protected virtual StrategyGenerator MutateGenerator(StrategyGenerator prev)
     {

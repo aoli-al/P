@@ -528,7 +528,7 @@ namespace PChecker.SystematicTesting
                     Logger.WriteLine($"..... Iter: {iteration}, covered states: {TestReport.CoverageInfo.EventInfo.ExploredNumState()}");
                     if (Strategy is IFeedbackGuidedStrategy s)
                     {
-                        Logger.WriteLine($"..... Total saved: {s.TotalSavedInputs()}");
+                        Logger.WriteLine($"..... Current input: {s.CurrentInputIndex()}, total saved: {s.TotalSavedInputs()}");
                     }
                 }
 

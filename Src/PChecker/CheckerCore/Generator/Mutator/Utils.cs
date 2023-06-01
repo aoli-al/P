@@ -6,7 +6,8 @@ namespace PChecker.Generator.Mutator;
 public class Utils
 {
     public static int SampleGeometric(double p, double random) {
-        return (int) Math.Ceiling(Math.Log(1 - random) / Math.Log(1 - p));
+        var result = Math.Ceiling(Math.Log(1 - random) / Math.Log(1 - p));
+        return (int)result;
     }
     public static RandomChoices<T> MutateRandomChoices<T> (RandomChoices<T> randomChoices, int meanMutationCount, int meanMutationSize, System.Random random)
         where T: IConvertible
