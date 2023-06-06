@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 using PChecker.Coverage;
@@ -98,6 +99,9 @@ namespace PChecker.SystematicTesting
         /// </summary>
         [DataMember]
         public HashSet<string> InternalErrors { get; internal set; }
+
+        [DataMember]
+        public HashSet<string> TimelineStates = new();
 
         /// <summary>
         /// Lock for the test report.

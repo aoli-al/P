@@ -20,6 +20,7 @@ using PChecker.Actors.Timers;
 using PChecker.Actors.Timers.Mocks;
 using PChecker.Coverage;
 using PChecker.Exceptions;
+using PChecker.Feedback;
 using PChecker.Random;
 using PChecker.Runtime;
 using PChecker.Specifications.Monitors;
@@ -67,6 +68,8 @@ namespace PChecker.SystematicTesting
         /// The root task id.
         /// </summary>
         internal readonly int? RootTaskId;
+
+        internal readonly EventTimeLineObserver TimeLineObserver = new();
 
         
         /// <summary>
@@ -151,6 +154,7 @@ namespace PChecker.SystematicTesting
             // Update the current asynchronous control flow with this runtime instance,
             // allowing future retrieval in the same asynchronous call stack.
             AssignAsyncControlFlowRuntime(this);
+            RegisterLog(TimeLineObserver);
         }
 
         /// <inheritdoc/>

@@ -28,6 +28,7 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
     private readonly CheckerConfiguration _checkerConfiguration;
 
     private readonly EventCoverage _visitedEvents = new();
+    private readonly HashSet<int> _visitedTimelines = new();
 
     protected readonly List<StrategyGenerator> SavedGenerators = new();
 
@@ -130,7 +131,9 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
     public virtual void ObserveRunningResults(ControlledRuntime runtime)
     {
         // TODO: implement real feedback.
-        if (_visitedEvents.Merge(runtime.GetCoverageInfo().EventInfo))
+        bool updated = _visitedEvents.Merge(runtime.GetCoverageInfo().EventInfo) ||
+                       _visitedTimelines.Add(runtime.TimeLineObserver.GetCurrentTimeline());
+        if (updated)
         {
             SavedGenerators.Add(Generator);
             _numMutationsWithoutNewSaved = 0;
