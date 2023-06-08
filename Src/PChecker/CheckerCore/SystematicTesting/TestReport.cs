@@ -101,7 +101,7 @@ namespace PChecker.SystematicTesting
         public HashSet<string> InternalErrors { get; internal set; }
 
         [DataMember]
-        public HashSet<int> TimelineStates = new();
+        public HashSet<string> TimelineStates = new();
 
         /// <summary>
         /// Lock for the test report.

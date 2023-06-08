@@ -23,6 +23,11 @@ public class EventTimeLineObserver: IActorRuntimeLog
         {
             return $"({Name}, {Count})";
         }
+
+        public string ToCompactString()
+        {
+            return Name;
+        }
     };
     public Dictionary<ActorId, LinkedList<EventData>> Timeline = new();
     private Dictionary<Event, ActorId> _eventMap = new();
@@ -199,16 +204,27 @@ public class EventTimeLineObserver: IActorRuntimeLog
     {
     }
 
-    public int GetCurrentTimeline()
+    public int GetCompactTimeline()
     {
-        var timelines = Timeline.Select(it => (it.Key.Type + ":" + string.Join(",", it.Value))).ToList();
+        var timelines = Timeline.Select(it => (it.Key.Type + ":" + string.Join(",", it.Value.Select(v => v.ToCompactString())))).ToList();
         timelines.Sort();
         return string.Join(";", timelines).GetHashCode();
     }
 
+    public int GetCurrentTimeline()
+    {
+        // var timelines = Timeline.Select(it => (it.Key.Type + ":" + string.Join(",", it.Value))).ToList();
+        // timelines.Sort();
+        // return string.Join(";", timelines).GetHashCode();
+        return GetCompactTimeline();
+    }
+
     public string GetCurrentTimelineString()
     {
-        var timelines = Timeline.Select(it => (it.Key.Type + ":" + string.Join(",", it.Value))).ToList();
+        // var timelines = Timeline.Select(it => (it.Key.Type + ":" + string.Join(",", it.Value))).ToList();
+        // timelines.Sort();
+        // return string.Join(";", timelines);
+        var timelines = Timeline.Select(it => (it.Key.Type + ":" + string.Join(",", it.Value.Select(v => v.ToCompactString())))).ToList();
         timelines.Sort();
         return string.Join(";", timelines);
     }
