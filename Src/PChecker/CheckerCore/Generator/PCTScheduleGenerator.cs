@@ -152,5 +152,6 @@ internal sealed class PctScheduleGenerator: IScheduleGenerator<PctScheduleGenera
     {
         ScheduleCount += 1;
         ScheduleLength += _scheduledSteps;
+        _prioritizedOperations.Clear();
     }
 }
