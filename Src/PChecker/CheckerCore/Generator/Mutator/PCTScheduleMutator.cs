@@ -12,6 +12,10 @@ internal class PCTScheduleMutator : IMutator<PctScheduleGenerator>
     {
         return new PctScheduleGenerator(prev.Random,
             Utils.MutateRandomChoices(prev.PriorityChoices, _meanMutationCount, _meanMutationSize, _random),
-            Utils.MutateRandomChoices(prev.SwitchPointChoices, _meanMutationCount, _meanMutationSize, _random));
+            Utils.MutateRandomChoices(prev.SwitchPointChoices, _meanMutationCount, _meanMutationSize, _random),
+            prev.MaxSwitchPoints,
+            prev.ScheduleLength,
+            prev.ScheduleCount
+        );
     }
 }

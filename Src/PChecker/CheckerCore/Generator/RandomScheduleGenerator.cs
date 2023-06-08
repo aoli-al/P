@@ -47,4 +47,8 @@ internal class RandomScheduleGenerator: IScheduleGenerator<RandomScheduleGenerat
     {
         return new RandomScheduleGenerator(Random, IntChoices);
     }
+
+    public void PrepareForNextInput()
+    {
+    }
 }

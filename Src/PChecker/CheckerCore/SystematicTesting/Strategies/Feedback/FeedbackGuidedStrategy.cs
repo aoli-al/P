@@ -147,6 +147,7 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
 
     private void PrepareNextInput()
     {
+        Generator.ScheduleGenerator.PrepareForNextInput();
         if (SavedGenerators.Count == 0)
         {
             // Mutate current input if no input is saved.

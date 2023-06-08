@@ -15,22 +15,38 @@ internal sealed class PctScheduleGenerator: IScheduleGenerator<PctScheduleGenera
     public RandomChoices<double> SwitchPointChoices;
     private readonly List<AsyncOperation> _prioritizedOperations = new();
     private int _nextPriorityChangePoint;
-    private int _scheduledSteps;
-    public int MaxSchedulingSteps;
-    private readonly double _switchPointProbability = 0.01;
+    private int _scheduledSteps = 0;
+    public int ScheduleLength;
+    public int ScheduleCount;
+    private double _switchPointProbability;
+    public readonly int MaxSwitchPoints;
 
-    public PctScheduleGenerator(System.Random random, RandomChoices<int>? intChoices, RandomChoices<double>? switchPointChoices)
+    public PctScheduleGenerator(System.Random random, RandomChoices<int>? intChoices, RandomChoices<double>? switchPointChoices, int maxSwitchPoints, int scheduleLength, int scheduleCount)
     {
         Random = random;
         PriorityChoices = intChoices != null ? new RandomChoices<int>(intChoices) : new RandomChoices<int>(random);
         SwitchPointChoices = switchPointChoices != null ? new RandomChoices<double>(switchPointChoices) :
             new RandomChoices<double>(random);
 
+        MaxSwitchPoints = maxSwitchPoints;
+        ScheduleLength = scheduleLength;
+        ScheduleCount = scheduleCount;
+
+        if (ScheduleCount == 0)
+        {
+            _switchPointProbability = 0.01;
+        }
+        else
+        {
+            _switchPointProbability = 1.0 * MaxSwitchPoints * ScheduleCount / ScheduleLength;
+        }
+
         _nextPriorityChangePoint = Utils.SampleGeometric(_switchPointProbability, SwitchPointChoices.Next());
+
     }
 
     public PctScheduleGenerator(CheckerConfiguration checkerConfiguration):
-        this(new System.Random((int?)checkerConfiguration.RandomGeneratorSeed ?? Guid.NewGuid().GetHashCode()), null, null)
+        this(new System.Random((int?)checkerConfiguration.RandomGeneratorSeed ?? Guid.NewGuid().GetHashCode()), null, null, checkerConfiguration.StrategyBound, 0, 0)
     {
     }
 
@@ -41,7 +57,7 @@ internal sealed class PctScheduleGenerator: IScheduleGenerator<PctScheduleGenera
 
     public PctScheduleGenerator Copy()
     {
-        return new PctScheduleGenerator(Random, PriorityChoices, SwitchPointChoices);
+        return new PctScheduleGenerator(Random, PriorityChoices, SwitchPointChoices, MaxSwitchPoints, ScheduleLength, ScheduleCount);
     }
 
     public AsyncOperation? NextRandomOperation(List<AsyncOperation> enabledOperations, AsyncOperation current)
@@ -132,5 +148,9 @@ internal sealed class PctScheduleGenerator: IScheduleGenerator<PctScheduleGenera
         Debug.WriteLine("<PCTLog> Moving priority change to '{0}'.", _nextPriorityChangePoint);
     }
 
-
+    public void PrepareForNextInput()
+    {
+        ScheduleCount += 1;
+        ScheduleLength += _scheduledSteps;
+    }
 }

@@ -7,4 +7,6 @@ internal interface IScheduleGenerator<T>: IGenerator<T>
 {
     public AsyncOperation? NextRandomOperation(List<AsyncOperation> enabledOperations, AsyncOperation current);
 
+
+    public void PrepareForNextInput();
 }
