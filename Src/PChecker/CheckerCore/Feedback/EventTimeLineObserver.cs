@@ -74,7 +74,7 @@ public class EventTimeLineObserver: IActorRuntimeLog
     public void OnDequeueEvent(ActorId id, string stateName, Event e)
     {
         Timeline.TryAdd(id, new());
-        if (_eventQueue.Count > 20)
+        if (_eventQueue.Count > 10)
         {
             var first = _eventQueue.First!.Value;
             if (Timeline[_eventMap[first]].First.Value.Count == 1)
