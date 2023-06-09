@@ -12,7 +12,7 @@ public class EventSeqObserver: IActorRuntimeLog
 
     public HashSet<int> SavedEvents = new();
     private LinkedList<string> _eventQueue = new();
-    private int _eventSize = 4;
+    private int _eventSize = 3;
 
 
     public void OnCreateActor(ActorId id, string creatorName, string creatorType)
@@ -51,7 +51,11 @@ public class EventSeqObserver: IActorRuntimeLog
         {
             _eventQueue.RemoveFirst();
         }
-        SavedEvents.Add(string.Join(",", _eventQueue).GetHashCode());
+
+        if (_eventQueue.Count == _eventSize)
+        {
+            SavedEvents.Add(string.Join(",", _eventQueue).GetHashCode());
+        }
     }
 
     public void OnReceiveEvent(ActorId id, string stateName, Event e, bool wasBlocked)
