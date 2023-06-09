@@ -103,6 +103,9 @@ namespace PChecker.SystematicTesting
         [DataMember]
         public HashSet<int> TimelineStates = new();
 
+        [DataMember]
+        public HashSet<int> EventSeqStates = new();
+
         /// <summary>
         /// Lock for the test report.
         /// </summary>
