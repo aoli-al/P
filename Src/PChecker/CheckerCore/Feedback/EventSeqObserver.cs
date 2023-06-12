@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using PChecker.Actors;
 using PChecker.Actors.Events;
 using PChecker.Actors.Logging;
@@ -11,8 +12,8 @@ public class EventSeqObserver: IActorRuntimeLog
 {
 
     public HashSet<int> SavedEvents = new();
-    private LinkedList<string> _eventQueue = new();
-    private int _eventSize = 3;
+    private LinkedList<Tuple<ActorId, String>> _eventQueue = new();
+    private int _eventSize = 10;
 
 
     public void OnCreateActor(ActorId id, string creatorName, string creatorType)
@@ -46,16 +47,9 @@ public class EventSeqObserver: IActorRuntimeLog
 
     public void OnDequeueEvent(ActorId id, string stateName, Event e)
     {
-        _eventQueue.AddLast(e.GetType().Name);
-        if (_eventQueue.Count > _eventSize)
-        {
-            _eventQueue.RemoveFirst();
-        }
-
-        if (_eventQueue.Count == _eventSize)
-        {
-            SavedEvents.Add(string.Join(",", _eventQueue).GetHashCode());
-        }
+        // _eventQueue.AddLast(e.GetType().Name);
+        _eventQueue.AddLast(new Tuple<ActorId, String>(id, e.GetType().Name));
+        CheckEventSeq();
     }
 
     public void OnReceiveEvent(ActorId id, string stateName, Event e, bool wasBlocked)
@@ -80,7 +74,8 @@ public class EventSeqObserver: IActorRuntimeLog
 
     public void OnGotoState(ActorId id, string currentStateName, string newStateName)
     {
-
+        _eventQueue.AddLast(new Tuple<ActorId, String>(id, newStateName));
+        CheckEventSeq();
     }
 
     public void OnPushState(ActorId id, string currentStateName, string newStateName)
@@ -182,5 +177,18 @@ public class EventSeqObserver: IActorRuntimeLog
     public void OnCompleted()
     {
 
+    }
+
+    private void CheckEventSeq()
+    {
+        if (_eventQueue.Count > _eventSize)
+        {
+            _eventQueue.RemoveFirst();
+        }
+
+        if (_eventQueue.Count == _eventSize)
+        {
+            SavedEvents.Add(string.Join(",", _eventQueue.Select(it => it.Item1.Type + ":" + it.Item2)).GetHashCode());
+        }
     }
 }

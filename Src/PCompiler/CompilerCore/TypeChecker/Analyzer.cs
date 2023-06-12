@@ -114,6 +114,8 @@ namespace Plang.Compiler.TypeChecker
                 moduleTypeChecker.CheckRefinementTest(test);
             }
 
+            // AffectedStatesAnalyzer.AnalyzeMachineMethods(handler, allFunctions);
+
             return globalScope;
         }
 
