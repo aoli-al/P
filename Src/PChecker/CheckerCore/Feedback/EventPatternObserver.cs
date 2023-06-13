@@ -1,6 +1,13 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Runtime.Serialization.Json;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 using PChecker.Actors;
 using PChecker.Actors.Events;
 using PChecker.Actors.Logging;
@@ -8,13 +15,10 @@ using PChecker.Actors.Timers;
 
 namespace PChecker.Feedback;
 
-public class EventSeqObserver: IActorRuntimeLog
+public class EventPatternObserver: IActorRuntimeLog
 {
-
-    public HashSet<int> SavedEvents = new();
-    private LinkedList<Tuple<ActorId, String>> _eventQueue = new();
-    private int _eventSize = 10;
-
+    private LinkedList<string> _eventQueue = new();
+    private HashSet<string> _interestingEvents = new() { "eBlockWorkItem" };
 
     public void OnCreateActor(ActorId id, string creatorName, string creatorType)
     {
@@ -48,8 +52,25 @@ public class EventSeqObserver: IActorRuntimeLog
     public void OnDequeueEvent(ActorId id, string stateName, Event e)
     {
         // _eventQueue.AddLast(e.GetType().Name);
-        _eventQueue.AddLast(new Tuple<ActorId, String>(id, e.GetType().Name));
-        CheckEventSeq();
+        if (_interestingEvents.Contains(e.GetType().Name))
+        {
+            _eventQueue.AddLast(GetEventWithPayload(e));
+        }
+    }
+
+    private string GetEventWithPayload(Event e)
+    {
+
+        var method = e.GetType().GetMethod("get_Payload");
+        var payload = method.Invoke(e, new object[] { });
+        var field = payload.GetType().GetField("fieldValues");
+        var objectList = new List<object>();
+        foreach (var item in (IEnumerable) field.GetValue(payload))
+        {
+            objectList.Add(item);
+        }
+        var id = objectList[1].ToString();
+        return id;
     }
 
     public void OnReceiveEvent(ActorId id, string stateName, Event e, bool wasBlocked)
@@ -74,8 +95,6 @@ public class EventSeqObserver: IActorRuntimeLog
 
     public void OnGotoState(ActorId id, string currentStateName, string newStateName)
     {
-        _eventQueue.AddLast(new Tuple<ActorId, String>(id, newStateName));
-        CheckEventSeq();
     }
 
     public void OnPushState(ActorId id, string currentStateName, string newStateName)
@@ -178,16 +197,10 @@ public class EventSeqObserver: IActorRuntimeLog
     {
     }
 
-    private void CheckEventSeq()
+    public bool IsMatched()
     {
-        if (_eventQueue.Count > _eventSize)
-        {
-            _eventQueue.RemoveFirst();
-        }
-
-        if (_eventQueue.Count == _eventSize)
-        {
-            SavedEvents.Add(string.Join(",", _eventQueue.Select(it => it.Item1.Type + ":" + it.Item2)).GetHashCode());
-        }
+        var pattern = @"^([0-9]*,)*4,([0-9]*,)*6,([0-9]*,)*[0-9]*$";
+        var result = Regex.Matches( string.Join(",", _eventQueue), pattern);
+        return result.Count > 0;
     }
 }

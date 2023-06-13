@@ -106,6 +106,8 @@ namespace PChecker.SystematicTesting
         [DataMember]
         public HashSet<int> EventSeqStates = new();
 
+        public int ValidScheduling = 0;
+
         /// <summary>
         /// Lock for the test report.
         /// </summary>

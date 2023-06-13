@@ -131,6 +131,10 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
     public virtual void ObserveRunningResults(ControlledRuntime runtime)
     {
         // TODO: implement real feedback.
+        if (!runtime.EventPatternObserver.IsMatched())
+        {
+            return;
+        }
         int prevSize = _visitedEventSeqs.Count;
         _visitedEventSeqs.UnionWith(runtime.EventSeqObserver.SavedEvents);
         bool updated = _visitedEvents.Merge(runtime.GetCoverageInfo().EventInfo) ||

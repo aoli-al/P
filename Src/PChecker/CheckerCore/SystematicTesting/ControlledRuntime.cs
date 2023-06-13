@@ -71,6 +71,7 @@ namespace PChecker.SystematicTesting
 
         internal readonly EventTimeLineObserver TimeLineObserver = new();
         internal readonly EventSeqObserver EventSeqObserver = new();
+        internal readonly EventPatternObserver EventPatternObserver = new();
 
         
         /// <summary>
@@ -157,6 +158,7 @@ namespace PChecker.SystematicTesting
             AssignAsyncControlFlowRuntime(this);
             RegisterLog(TimeLineObserver);
             RegisterLog(EventSeqObserver);
+            RegisterLog(EventPatternObserver);
         }
 
         /// <inheritdoc/>
