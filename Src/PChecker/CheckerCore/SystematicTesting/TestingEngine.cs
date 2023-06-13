@@ -782,18 +782,17 @@ namespace PChecker.SystematicTesting
                 report.CoverageInfo.CoverageGraph = Graph;
             }
 
-            var coverageInfo = runtime.GetCoverageInfo();
-            report.CoverageInfo.Merge(coverageInfo);
-            TestReport.Merge(report);
             // TestReport.TimelineStates.Add(runtime.TimeLineObserver.GetCurrentTimeline());
             if (runtime.EventPatternObserver.IsMatched())
             {
+                var coverageInfo = runtime.GetCoverageInfo();
+                report.CoverageInfo.Merge(coverageInfo);
+                TestReport.Merge(report);
                 TestReport.EventSeqStates.UnionWith(runtime.EventSeqObserver.SavedEvents);
                 TestReport.ValidScheduling += 1;
+                // Also save the graph snapshot of the last iteration, if there is one.
+                Graph = coverageInfo.CoverageGraph;
             }
-
-            // Also save the graph snapshot of the last iteration, if there is one.
-            Graph = coverageInfo.CoverageGraph;
         }
 
         /// <summary>
