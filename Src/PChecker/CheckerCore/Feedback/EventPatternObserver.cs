@@ -60,7 +60,6 @@ public class EventPatternObserver: IActorRuntimeLog
 
     private string GetEventWithPayload(Event e)
     {
-
         var method = e.GetType().GetMethod("get_Payload");
         var payload = method.Invoke(e, new object[] { });
         var field = payload.GetType().GetField("fieldValues");
@@ -199,7 +198,7 @@ public class EventPatternObserver: IActorRuntimeLog
 
     public bool IsMatched()
     {
-        var pattern = @"^([0-9]*,)*4,([0-9]*,)*6,([0-9]*,)*4,([0-9]*,)*6,([0-9]*,)*[0-9]*$";
+        var pattern = @"^([0-9]*,)+6,([0-9]*,)+4,([0-9]*,)+6,([0-9]*,)+4,([0-9]*,)*[0-9]$";
         var result = Regex.Matches( string.Join(",", _eventQueue), pattern);
         return result.Count > 0;
     }

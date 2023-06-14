@@ -51,6 +51,22 @@ namespace PChecker.SystematicTesting.Strategies.Probabilistic
             var idx = RandomValueGenerator.Next(enabledOperations.Count);
             next = enabledOperations[idx];
 
+            // enabledOperations.Sort((a, b) =>
+            // {
+            //     if (a.Name.Contains("Coalesce"))
+            //     {
+            //         return 1;
+            //     }
+            //
+            //     if (a.Name.Contains("SplitWorker"))
+            //     {
+            //         return 1;
+            //     }
+            //
+            //     return -1;
+            // });
+            // next = enabledOperations[0];
+
             ScheduledSteps++;
 
             return true;
