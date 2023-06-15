@@ -13,7 +13,7 @@ public class EventSeqObserver: IActorRuntimeLog
 
     public HashSet<int> SavedEvents = new();
     private LinkedList<Tuple<ActorId, String>> _eventQueue = new();
-    private int _eventSize = 10;
+    private int _eventSize = 3;
 
 
     public void OnCreateActor(ActorId id, string creatorName, string creatorType)
