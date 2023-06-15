@@ -13,10 +13,12 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
+using Antlr4.Runtime;
 using PChecker.Actors;
 using PChecker.Actors.Logging;
 using PChecker.Coverage;
 using PChecker.Feedback;
+using PChecker.Feedback.EventMatcher;
 using PChecker.Generator;
 using PChecker.IO;
 using PChecker.IO.Debugging;
@@ -365,6 +367,17 @@ namespace PChecker.SystematicTesting
                 {
                     // Invokes the user-specified initialization method.
                     TestMethodInfo.InitializeAllIterations();
+                    var pattern = "eBlockWorkItem{wType:\"*\"}+," +
+                                  "eBlockWorkItem{wType:\"6\"},eBlockWorkItem{wType:\"*\"}+," +
+                                  "eBlockWorkItem{wType:\"4\"},eBlockWorkItem{wType:\"*\"}+," +
+                                  "eBlockWorkItem{wType:\"6\"},eBlockWorkItem{wType:\"*\"}+," +
+                                  "eBlockWorkItem{wType:\"*\"}+";
+                    var parser = new EventLangParser(new CommonTokenStream(new EventLangLexer(new AntlrInputStream(pattern))));
+                    var visitor = new EventLangVisitor();
+                    var node = visitor.Visit(parser.exp());
+
+                    var nfa = Nfa.TreeToNFA(node);
+                    nfa.Show();
 
                     var maxIterations = IsReplayModeEnabled ? 1 : _checkerConfiguration.TestingIterations;
                     for (var i = 0; i < maxIterations; i++)
@@ -374,8 +387,9 @@ namespace PChecker.SystematicTesting
                             break;
                         }
 
+                        nfa = Nfa.TreeToNFA(node);
                         // Runs a new testing iteration.
-                        RunNextIteration(i);
+                        RunNextIteration(i, nfa);
 
                         if (IsReplayModeEnabled || (!_checkerConfiguration.PerformFullExploration &&
                                                     TestReport.NumOfFoundBugs > 0) || !Strategy.PrepareForNextIteration())
@@ -427,7 +441,7 @@ namespace PChecker.SystematicTesting
         /// <summary>
         /// Runs the next testing iteration.
         /// </summary>
-        private void RunNextIteration(int iteration)
+        private void RunNextIteration(int iteration, Nfa nfa)
         {
             if (!IsReplayModeEnabled && ShouldPrintIteration(iteration + 1))
             {
@@ -453,7 +467,7 @@ namespace PChecker.SystematicTesting
             try
             {
                 // Creates a new instance of the controlled runtime.
-                runtime = new ControlledRuntime(_checkerConfiguration, Strategy, RandomValueGenerator);
+                runtime = new ControlledRuntime(_checkerConfiguration, Strategy, RandomValueGenerator, nfa);
                 // runtime.LogWriter.RegisterLog();
 
                 // If verbosity is turned off, then intercept the program log, and also redirect
@@ -533,6 +547,7 @@ namespace PChecker.SystematicTesting
                     if (Strategy is IFeedbackGuidedStrategy s)
                     {
                         Logger.WriteLine($"..... Current input: {s.CurrentInputIndex()}, total saved: {s.TotalSavedInputs()}");
+                        Logger.WriteLine($"..... Covered states: {string.Join(',', s.GetAllCoveredStates())}");
                     }
                 }
 

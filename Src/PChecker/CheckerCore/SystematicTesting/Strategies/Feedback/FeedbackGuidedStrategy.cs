@@ -24,8 +24,7 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
     private readonly int _maxScheduledSteps;
 
     private int _scheduledSteps;
-
-    private readonly CheckerConfiguration _checkerConfiguration;
+    private HashSet<int> _visitedStates = new();
 
     private readonly EventCoverage _visitedEvents = new();
     private readonly HashSet<int> _visitedEventSeqs = new();
@@ -50,7 +49,6 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
     public FeedbackGuidedStrategy(CheckerConfiguration checkerConfiguration, TInput input, TSchedule schedule)
     {
         _maxScheduledSteps = checkerConfiguration.MaxFairSchedulingSteps;
-        _checkerConfiguration = checkerConfiguration;
         Generator = new StrategyGenerator(input, schedule);
     }
 
@@ -58,13 +56,12 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
     public bool GetNextOperation(AsyncOperation current, IEnumerable<AsyncOperation> ops, out AsyncOperation next)
     {
         var enabledOperations = ops.Where(op => op.Status is AsyncOperationStatus.Enabled).ToList();
-
-        var mainOperations = enabledOperations.Where(op => op.Id <= 2).ToList();
-        if (mainOperations.Count > 0)
-        {
-            next = mainOperations[0];
-            return true;
-        }
+        // var mainOperations = enabledOperations.Where(op => op.Id <= 2).ToList();
+        // if (mainOperations.Count > 0)
+        // {
+        //     next = mainOperations[0];
+        //     return true;
+        // }
         next = Generator.ScheduleGenerator.NextRandomOperation(enabledOperations, current);
         _scheduledSteps++;
         return next != null;
@@ -138,19 +135,26 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
     public virtual void ObserveRunningResults(ControlledRuntime runtime)
     {
         // TODO: implement real feedback.
-        if (!runtime.EventPatternObserver.IsMatched())
+        if (runtime.EventPatternObserver.IsMatched())
         {
-            return;
+            int prevSize = _visitedEventSeqs.Count;
+            _visitedEventSeqs.UnionWith(runtime.EventSeqObserver.SavedEvents);
+            bool updated = _visitedEvents.Merge(runtime.GetCoverageInfo().EventInfo) ||
+                           prevSize != _visitedEventSeqs.Count;
+            if (updated)
+            {
+                SavedGenerators.Add(Generator);
+                _numMutationsWithoutNewSaved = 0;
+            }
         }
-        int prevSize = _visitedEventSeqs.Count;
-        _visitedEventSeqs.UnionWith(runtime.EventSeqObserver.SavedEvents);
-        bool updated = _visitedEvents.Merge(runtime.GetCoverageInfo().EventInfo) ||
-                       prevSize != _visitedEventSeqs.Count;
-        if (updated)
-        {
-            SavedGenerators.Add(Generator);
-            _numMutationsWithoutNewSaved = 0;
-        }
+
+        // int prevStates = _visitedStates.Count;
+        // _visitedStates.UnionWith(runtime.EventPatternObserver.Matcher.VisistedStates);
+        // if (_visitedStates.Count != prevStates)
+        // {
+        //         SavedGenerators.Add(Generator);
+        //         _numMutationsWithoutNewSaved = 0;
+        // }
     }
 
     public int TotalSavedInputs()
@@ -193,5 +197,10 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
     protected virtual StrategyGenerator MutateGenerator(StrategyGenerator prev)
     {
         return new StrategyGenerator(Generator.InputGenerator.Mutate(), Generator.ScheduleGenerator.Mutate());
+    }
+
+    public HashSet<int> GetAllCoveredStates()
+    {
+        return _visitedStates;
     }
 }

@@ -18,9 +18,17 @@
     <RepositoryUrl>https://github.com/p-org/P</RepositoryUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <Nullable>enable</Nullable>
+    <Antlr4JavaExecutable Condition=" '$(OS)' != 'Windows_NT' ">/usr/bin/java</Antlr4JavaExecutable>
   </PropertyGroup>
   <ItemGroup>
     <None Include="../../../Icon/icon.png" Pack="true" PackagePath="" />
     <None Include="../../../README.md" Pack="true" PackagePath="" />
+    <PackageReference Include="Antlr4" Version="4.6.5-beta001" />
+    <Antlr4 Include="Feedback/EventMatcher/EventLang.g4">
+      <Generator>MSBuild:Compile</Generator>
+      <CustomToolNamespace>PChecker.Feedback.EventMatcher</CustomToolNamespace>
+      <Listener>True</Listener>
+      <Visitor>True</Visitor>
+    </Antlr4>
   </ItemGroup>
 </Project>

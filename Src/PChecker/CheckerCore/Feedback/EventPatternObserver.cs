@@ -12,13 +12,24 @@ using PChecker.Actors;
 using PChecker.Actors.Events;
 using PChecker.Actors.Logging;
 using PChecker.Actors.Timers;
+using PChecker.Feedback.EventMatcher;
+using PChecker.SystematicTesting;
 
 namespace PChecker.Feedback;
 
-public class EventPatternObserver: IActorRuntimeLog
+internal class EventPatternObserver: IActorRuntimeLog
 {
     private LinkedList<string> _eventQueue = new();
     private HashSet<string> _interestingEvents = new() { "eBlockWorkItem" };
+    public readonly Nfa Matcher;
+    private bool _matched = false;
+    private ControlledRuntime _runtime;
+
+    public EventPatternObserver(Nfa matcher, ControlledRuntime runtime)
+    {
+        Matcher = matcher;
+        _runtime = runtime;
+    }
 
     public void OnCreateActor(ActorId id, string creatorName, string creatorType)
     {
@@ -51,25 +62,11 @@ public class EventPatternObserver: IActorRuntimeLog
 
     public void OnDequeueEvent(ActorId id, string stateName, Event e)
     {
-        // _eventQueue.AddLast(e.GetType().Name);
-        if (_interestingEvents.Contains(e.GetType().Name))
+        _matched |= Matcher.MatchOne(e);
+        if (Matcher.CurrentStates.Count == 0)
         {
-            _eventQueue.AddLast(GetEventWithPayload(e));
+            _runtime.Stop();
         }
-    }
-
-    private string GetEventWithPayload(Event e)
-    {
-        var method = e.GetType().GetMethod("get_Payload");
-        var payload = method.Invoke(e, new object[] { });
-        var field = payload.GetType().GetField("fieldValues");
-        var objectList = new List<object>();
-        foreach (var item in (IEnumerable) field.GetValue(payload))
-        {
-            objectList.Add(item);
-        }
-        var id = objectList[1].ToString();
-        return id;
     }
 
     public void OnReceiveEvent(ActorId id, string stateName, Event e, bool wasBlocked)
@@ -198,8 +195,6 @@ public class EventPatternObserver: IActorRuntimeLog
 
     public bool IsMatched()
     {
-        var pattern = @"^([0-9]*,)+4,([0-9]*,)+6,([0-9]*,)+6,([0-9]*,)+4,([0-9]*,)*[0-9]$";
-        var result = Regex.Matches( string.Join(",", _eventQueue), pattern);
-        return result.Count > 0;
+        return _matched;
     }
 }
