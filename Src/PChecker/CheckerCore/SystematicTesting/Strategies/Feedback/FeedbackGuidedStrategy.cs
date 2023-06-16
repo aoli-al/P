@@ -128,6 +128,8 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
         _scheduledSteps = 0;
     }
 
+    public List<string> LastSavedSchedule = new();
+
     /// <summary>
     /// This method observes the results of previous run and prepare for the next run.
     /// </summary>
@@ -143,6 +145,7 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
                            prevSize != _visitedEventSeqs.Count;
             if (updated)
             {
+                LastSavedSchedule = runtime.EventPatternObserver.SavedEventTypes;
                 SavedGenerators.Add(Generator);
                 _numMutationsWithoutNewSaved = 0;
             }
@@ -153,6 +156,7 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
             _visitedStates.UnionWith(runtime.EventPatternObserver.Matcher.VisistedStates);
             if (_visitedStates.Count != prevStates)
             {
+                LastSavedSchedule = runtime.EventPatternObserver.SavedEventTypes;
                 SavedGenerators.Clear();
                 SavedGenerators.Add(Generator);
                 _numMutationsWithoutNewSaved = 0;
@@ -205,5 +209,10 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
     public HashSet<int> GetAllCoveredStates()
     {
         return _visitedStates;
+    }
+
+    public List<string> GetLastSavedScheduling()
+    {
+        return LastSavedSchedule;
     }
 }

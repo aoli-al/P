@@ -8,4 +8,5 @@ internal interface IFeedbackGuidedStrategy: ISchedulingStrategy
     public int TotalSavedInputs();
     public int CurrentInputIndex();
     public HashSet<int> GetAllCoveredStates();
+    public List<string> GetLastSavedScheduling();
 }

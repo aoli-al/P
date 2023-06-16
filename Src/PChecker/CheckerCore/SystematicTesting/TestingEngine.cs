@@ -549,12 +549,11 @@ namespace PChecker.SystematicTesting
                     Logger.WriteLine($"..... Iter: {iteration}, covered event states: {TestReport.CoverageInfo.EventInfo.ExploredNumState()}, " +
                                      $"covered event seqs: {TestReport.EventSeqStates.Count}, " +
                                      $"valid schedules: {TestReport.ValidScheduling}");
-                    Logger.WriteLine(
-                        $"..... Schedule: {string.Join(",",runtime.EventPatternObserver.SavedEventTypes)}");
                     if (Strategy is IFeedbackGuidedStrategy s)
                     {
                         Logger.WriteLine($"..... Current input: {s.CurrentInputIndex()}, total saved: {s.TotalSavedInputs()}");
                         Logger.WriteLine($"..... Covered states: {string.Join(',', s.GetAllCoveredStates())}");
+                        Logger.WriteLine($"..... Last saved scheduling: {string.Join(',', s.GetLastSavedScheduling())}");
                     }
                 }
 
