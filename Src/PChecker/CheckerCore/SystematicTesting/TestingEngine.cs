@@ -367,11 +367,16 @@ namespace PChecker.SystematicTesting
                 {
                     // Invokes the user-specified initialization method.
                     TestMethodInfo.InitializeAllIterations();
-                    var pattern = "eBlockWorkItem{wType:\"*\"}+," +
+                    var pattern = "eBlockWorkItem{wType:\"1\"}," +
+                                  "eBlockWorkItem{wType:\"4\"},eBlockWorkItem{wType:\"*\"}+," +
                                   "eBlockWorkItem{wType:\"6\"},eBlockWorkItem{wType:\"*\"}+," +
                                   "eBlockWorkItem{wType:\"4\"},eBlockWorkItem{wType:\"*\"}+," +
                                   "eBlockWorkItem{wType:\"6\"},eBlockWorkItem{wType:\"*\"}+," +
                                   "eBlockWorkItem{wType:\"*\"}+";
+                    // Add bounds
+                    // Notion of sender
+                    // Where are those patterns from?
+                    // Paxos
                     var parser = new EventLangParser(new CommonTokenStream(new EventLangLexer(new AntlrInputStream(pattern))));
                     var visitor = new EventLangVisitor();
                     var node = visitor.Visit(parser.exp());
@@ -544,6 +549,8 @@ namespace PChecker.SystematicTesting
                     Logger.WriteLine($"..... Iter: {iteration}, covered event states: {TestReport.CoverageInfo.EventInfo.ExploredNumState()}, " +
                                      $"covered event seqs: {TestReport.EventSeqStates.Count}, " +
                                      $"valid schedules: {TestReport.ValidScheduling}");
+                    Logger.WriteLine(
+                        $"..... Schedule: {string.Join(",",runtime.EventPatternObserver.SavedEventTypes)}");
                     if (Strategy is IFeedbackGuidedStrategy s)
                     {
                         Logger.WriteLine($"..... Current input: {s.CurrentInputIndex()}, total saved: {s.TotalSavedInputs()}");

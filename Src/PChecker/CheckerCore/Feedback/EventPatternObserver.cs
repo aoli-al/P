@@ -24,6 +24,7 @@ internal class EventPatternObserver: IActorRuntimeLog
     public readonly Nfa Matcher;
     private bool _matched = false;
     private ControlledRuntime _runtime;
+    public List<string> SavedEventTypes = new();
 
     public EventPatternObserver(Nfa matcher, ControlledRuntime runtime)
     {
@@ -63,11 +64,49 @@ internal class EventPatternObserver: IActorRuntimeLog
     public void OnDequeueEvent(ActorId id, string stateName, Event e)
     {
         _matched |= Matcher.MatchOne(e);
-        if (Matcher.CurrentStates.Count == 0)
+        if (e.GetType().Name == "eBlockWorkItem")
         {
-            _runtime.Stop();
+            var result = GetEventWithPayload(e);
+            SavedEventTypes.Add(result["wType"]);
         }
     }
+
+    private Dictionary<string, string> GetEventWithPayload(Event e)
+    {
+        var method = e.GetType().GetMethod("get_Payload");
+        var payload = method.Invoke(e, new object[] { });
+
+
+        var fieldNames = payload.GetType().GetField("fieldNames");
+        var names = new List<string>();
+        foreach (var item in (IEnumerable) fieldNames.GetValue(payload))
+        {
+            names.Add((string) item);
+        }
+        var fieldValues = payload.GetType().GetField("fieldValues");
+        var values = new List<string>();
+        foreach (var item in (IEnumerable) fieldValues.GetValue(payload))
+        {
+            if (item != null)
+            {
+                values.Add(item.ToString());
+            }
+            else
+            {
+                values.Add("null");
+            }
+        }
+
+        Dictionary<string, string> result = new();
+
+        for (var i = 0; i < names.Count; i++)
+        {
+            result[names[i]] = values[i];
+        }
+
+        return result;
+    }
+
 
     public void OnReceiveEvent(ActorId id, string stateName, Event e, bool wasBlocked)
     {

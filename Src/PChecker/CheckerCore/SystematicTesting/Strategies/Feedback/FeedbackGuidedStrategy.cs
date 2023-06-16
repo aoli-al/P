@@ -56,12 +56,12 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
     public bool GetNextOperation(AsyncOperation current, IEnumerable<AsyncOperation> ops, out AsyncOperation next)
     {
         var enabledOperations = ops.Where(op => op.Status is AsyncOperationStatus.Enabled).ToList();
-        // var mainOperations = enabledOperations.Where(op => op.Id <= 2).ToList();
-        // if (mainOperations.Count > 0)
-        // {
-        //     next = mainOperations[0];
-        //     return true;
-        // }
+        var mainOperations = enabledOperations.Where(op => op.Id <= 2).ToList();
+        if (mainOperations.Count > 0)
+        {
+            next = mainOperations[0];
+            return true;
+        }
         next = Generator.ScheduleGenerator.NextRandomOperation(enabledOperations, current);
         _scheduledSteps++;
         return next != null;
@@ -147,14 +147,17 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
                 _numMutationsWithoutNewSaved = 0;
             }
         }
-
-        // int prevStates = _visitedStates.Count;
-        // _visitedStates.UnionWith(runtime.EventPatternObserver.Matcher.VisistedStates);
-        // if (_visitedStates.Count != prevStates)
-        // {
-        //         SavedGenerators.Add(Generator);
-        //         _numMutationsWithoutNewSaved = 0;
-        // }
+        else
+        {
+            int prevStates = _visitedStates.Count;
+            _visitedStates.UnionWith(runtime.EventPatternObserver.Matcher.VisistedStates);
+            if (_visitedStates.Count != prevStates)
+            {
+                SavedGenerators.Clear();
+                SavedGenerators.Add(Generator);
+                _numMutationsWithoutNewSaved = 0;
+            }
+        }
     }
 
     public int TotalSavedInputs()
