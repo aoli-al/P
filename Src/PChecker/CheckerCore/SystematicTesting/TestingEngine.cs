@@ -553,9 +553,9 @@ namespace PChecker.SystematicTesting
                     {
                         Logger.WriteLine($"..... Current input: {s.CurrentInputIndex()}, total saved: {s.TotalSavedInputs()}");
                         Logger.WriteLine($"..... Covered states: {string.Join(',', s.GetAllCoveredStates())}");
-                        Logger.WriteLine($"..... Last saved scheduling: {string.Join(',', s.GetLastSavedScheduling())}");
                     }
                 }
+                Logger.WriteLine($"..... Last scheduling: {string.Join(',', runtime.EventPatternObserver.SavedEventTypes)}");
 
                 if (!IsReplayModeEnabled && _checkerConfiguration.PerformFullExploration && runtime.Scheduler.BugFound)
                 {
