@@ -5,3 +5,4 @@ Test.cs
 pom.xml
 *.csproj
 PCheckerOutput/
+logs/

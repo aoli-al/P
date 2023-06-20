@@ -329,6 +329,7 @@ namespace Plang.Options
                         if (fileName.EndsWith("PCheckerCore.dll") 
                             || fileName.EndsWith("PCSharpRuntime.dll")
                             || fileName.EndsWith("/P.dll")
+                            || fileName.EndsWith("/Antlr4.Runtime.dll")
                             || fileName.EndsWith("/p.dll"))
                             continue;
                     }

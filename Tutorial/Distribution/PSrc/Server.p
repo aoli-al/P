@@ -17,7 +17,7 @@ machine ClientA
 
     state SendRequests {
         entry {
-            if (index < 1) {
+            if (index < 2) {
                 if ($$) {
                     send server, eEventA;
                     index = index + 1;
@@ -43,7 +43,7 @@ machine ClientB
 
     state SendRequests {
         entry {
-            if (index < 1) {
+            if (index < 2) {
                 if ($$) {
                     send server, eEventB;
                     index = index + 1;
@@ -69,7 +69,7 @@ machine ClientC
 
     state SendRequests {
         entry {
-            if (index < 1) {
+            if (index < 2) {
                 if ($$) {
                     send server, eEventC;
                     index = index + 1;

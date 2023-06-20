@@ -9,7 +9,7 @@ HOME = os.path.expanduser('~')
 
 def run_test():
     os.mkdir("logs")
-    for i in range(100000):
+    for i in range(10000):
         if i % 100 == 0:
             print(i)
         out = open(os.path.join("logs", f"{i}.txt"), "w")
