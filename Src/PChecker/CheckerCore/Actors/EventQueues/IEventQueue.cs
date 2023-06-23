@@ -32,6 +32,8 @@ namespace PChecker.Actors.EventQueues
         /// </summary>
         (DequeueStatus status, Event e, Guid opGroupId, EventInfo info) Dequeue();
 
+        (DequeueStatus status, Event e, Guid opGroupId, EventInfo info) PeepNextEvent();
+
         /// <summary>
         /// Enqueues the specified raised event.
         /// </summary>

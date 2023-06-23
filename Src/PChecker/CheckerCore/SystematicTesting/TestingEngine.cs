@@ -258,7 +258,13 @@ namespace PChecker.SystematicTesting
             }
             else if (checkerConfiguration.SchedulingStrategy is "feedback")
             {
-                Strategy = new FeedbackGuidedStrategy<RandomInputGenerator, RandomScheduleGenerator>(_checkerConfiguration, new RandomInputGenerator(checkerConfiguration), new RandomScheduleGenerator(checkerConfiguration));
+                Strategy = new FeedbackGuidedStrategy<RandomInputGenerator, RandomScheduleGenerator>(
+                    _checkerConfiguration, new RandomInputGenerator(checkerConfiguration), new RandomScheduleGenerator(checkerConfiguration));
+            }
+            else if (checkerConfiguration.SchedulingStrategy is "pattern")
+            {
+                Strategy = new UnbiasedSchedulingStrategy<RandomInputGenerator, RandomScheduleGenerator>(
+                    _checkerConfiguration, new RandomInputGenerator(checkerConfiguration), new RandomScheduleGenerator(checkerConfiguration));
             }
             else if (checkerConfiguration.SchedulingStrategy is "2stagefeedback")
             {

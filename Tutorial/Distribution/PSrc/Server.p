@@ -1,6 +1,8 @@
-event eEventA;
-event eEventB;
-event eEventC;
+type tEvent = (eId: int, client: machine);
+
+event eEventA: tEvent;
+event eEventB: tEvent;
+event eEventC: tEvent;
 event eNextEvent;
 
 machine ClientA
@@ -17,9 +19,11 @@ machine ClientA
 
     state SendRequests {
         entry {
+            var e: tEvent;
             if (index < 2) {
                 if ($$) {
-                    send server, eEventA;
+                    e = (eId = index, client = this);
+                    send server, eEventA, e;
                     index = index + 1;
                 }
                 send this, eNextEvent;
@@ -43,9 +47,11 @@ machine ClientB
 
     state SendRequests {
         entry {
+            var e: tEvent;
             if (index < 2) {
                 if ($$) {
-                    send server, eEventB;
+                    e = (eId = index, client = this);
+                    send server, eEventB, e;
                     index = index + 1;
                 }
                 send this, eNextEvent;
@@ -69,9 +75,11 @@ machine ClientC
 
     state SendRequests {
         entry {
+            var e: tEvent;
             if (index < 2) {
                 if ($$) {
-                    send server, eEventC;
+                    e = (eId = index, client = this);
+                    send server, eEventC, e;
                     index = index + 1;
                 }
                 send this, eNextEvent;
@@ -88,21 +96,20 @@ machine Server
     start state ReceiveEvents {
         entry {
             new ClientA(this);
-            new ClientB(this);
-            new ClientC(this);
         }
-        on eEventA do {
+        on eEventA do (req: tEvent) {
             print "eEventA processed";
         }
-        on eEventB do {
+        on eEventB do (req: tEvent) {
             print "eEventB processed";
         }
-        on eEventC do {
+        on eEventC do (req: tEvent) {
             print "eEventC processed";
         }
     }
 }
 
+// Run the same operation
 
 
 module TestModule =  { ClientA, ClientB, ClientC, Server };

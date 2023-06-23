@@ -119,6 +119,38 @@ namespace PChecker.Actors.EventQueues.Mocks
             return EnqueueStatus.EventHandlerRunning;
         }
 
+        public (DequeueStatus status, Event e, Guid opGroupId, EventInfo info) PeepNextEvent()
+        {
+            // Try to get the raised event, if there is one. Raised events
+            // have priority over the events in the inbox.
+            if (RaisedEvent != default)
+            {
+                if (ActorManager.IsEventIgnored(RaisedEvent.e, RaisedEvent.opGroupId, RaisedEvent.info))
+                {
+                }
+                else
+                {
+                    var raisedEvent = RaisedEvent;
+                    return (DequeueStatus.Raised, raisedEvent.e, raisedEvent.opGroupId, raisedEvent.info);
+                }
+            }
+
+            // Try to dequeue the next event, if there is one.
+            var (e, opGroupId, info) = TryDequeueEvent(true);
+            if (e != null)
+            {
+                // Found next event that can be dequeued.
+                return (DequeueStatus.Success, e, opGroupId, info);
+            }
+
+            // TODO: check op-id of default event.
+            // A default event handler exists.
+            var stateName = Actor is StateMachine stateMachine ?
+                NameResolver.GetStateNameForLogging(stateMachine.CurrentState) : string.Empty;
+            var eventOrigin = new EventOriginInfo(Actor.Id, Actor.GetType().FullName, stateName);
+            return (DequeueStatus.Default, DefaultEvent.Instance, Guid.Empty, new EventInfo(DefaultEvent.Instance, eventOrigin));
+        }
+
         /// <inheritdoc/>
         public (DequeueStatus status, Event e, Guid opGroupId, EventInfo info) Dequeue()
         {

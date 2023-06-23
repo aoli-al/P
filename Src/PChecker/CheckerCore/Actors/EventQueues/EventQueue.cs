@@ -107,6 +107,11 @@ namespace PChecker.Actors.EventQueues
             return enqueueStatus;
         }
 
+        public (DequeueStatus status, Event e, Guid opGroupId, EventInfo info) PeepNextEvent()
+        {
+            throw new NotImplementedException();
+        }
+
         /// <inheritdoc/>
         public (DequeueStatus status, Event e, Guid opGroupId, EventInfo info) Dequeue()
         {
