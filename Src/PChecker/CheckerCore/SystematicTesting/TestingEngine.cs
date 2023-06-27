@@ -263,6 +263,9 @@ namespace PChecker.SystematicTesting
             }
             else if (checkerConfiguration.SchedulingStrategy is "pattern")
             {
+                // Strategy = new UnbiasedSchedulingQLearning(checkerConfiguration.MaxUnfairSchedulingSteps, RandomValueGenerator);
+                // Strategy = new UnbiasedSchedulingQLearning(
+                //     _checkerConfiguration, new RandomInputGenerator(checkerConfiguration), new RandomScheduleGenerator(checkerConfiguration));
                 Strategy = new UnbiasedSchedulingStrategy<RandomInputGenerator, RandomScheduleGenerator>(
                     _checkerConfiguration, new RandomInputGenerator(checkerConfiguration), new RandomScheduleGenerator(checkerConfiguration));
             }

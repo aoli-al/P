@@ -23,7 +23,7 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
 
     private readonly int _maxScheduledSteps;
 
-    private int _scheduledSteps;
+    protected int ScheduledSteps;
     private HashSet<int> _visitedStates = new();
 
     private readonly EventCoverage _visitedEvents = new();
@@ -31,7 +31,7 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
 
     protected readonly List<StrategyGenerator> SavedGenerators = new();
 
-    private readonly int _maxMutationsWithoutNewSaved = 20;
+    private readonly int _maxMutationsWithoutNewSaved = 3;
 
     private int _numMutationsWithoutNewSaved = 0;
 
@@ -57,7 +57,7 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
     {
         var enabledOperations = ops.Where(op => op.Status is AsyncOperationStatus.Enabled).ToList();
         next = Generator.ScheduleGenerator.NextRandomOperation(enabledOperations, current);
-        _scheduledSteps++;
+        ScheduledSteps++;
         return next != null;
     }
 
@@ -65,9 +65,6 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
     public bool GetNextBooleanChoice(AsyncOperation current, int maxValue, out bool next)
     {
         next = Generator.InputGenerator.Next(maxValue) == 0;
-
-        _scheduledSteps++;
-
         return true;
     }
 
@@ -75,14 +72,13 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
     public bool GetNextIntegerChoice(AsyncOperation current, int maxValue, out int next)
     {
         next = Generator.InputGenerator.Next(maxValue);
-        _scheduledSteps++;
         return true;
     }
 
     /// <inheritdoc/>
     public virtual bool PrepareForNextIteration()
     {
-        _scheduledSteps = 0;
+        ScheduledSteps = 0;
         PrepareNextInput();
         return true;
     }
@@ -90,7 +86,7 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
     /// <inheritdoc/>
     public int GetScheduledSteps()
     {
-        return _scheduledSteps;
+        return ScheduledSteps;
     }
 
     /// <inheritdoc/>
@@ -101,7 +97,7 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
             return false;
         }
 
-        return _scheduledSteps >= _maxScheduledSteps;
+        return ScheduledSteps >= _maxScheduledSteps;
     }
 
     /// <inheritdoc/>
@@ -119,7 +115,7 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
     /// <inheritdoc/>
     public void Reset()
     {
-        _scheduledSteps = 0;
+        ScheduledSteps = 0;
     }
 
     public List<string> LastSavedSchedule = new();

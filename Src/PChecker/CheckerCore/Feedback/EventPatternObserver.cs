@@ -69,6 +69,11 @@ internal class EventPatternObserver: IActorRuntimeLog
             var result = GetEventWithPayload(e);
             SavedEventTypes.Add(result["wType"]);
         }
+
+        if (e.GetType().Name.Contains("eEvent"))
+        {
+            SavedEventTypes.Add(e.GetType().Name);
+        }
     }
 
     private Dictionary<string, string> GetEventWithPayload(Event e)

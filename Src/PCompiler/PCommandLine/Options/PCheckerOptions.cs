@@ -170,7 +170,6 @@ namespace Plang.Options
                     checkerConfiguration.RandomGeneratorSeed = (uint)option.Value;
                     break;
                 case "sch-random":
-                case "sch-pattern":
                 case "sch-feedback":
                 case "sch-2stagefeedback":
                     checkerConfiguration.SchedulingStrategy = option.LongName.Substring(4);
@@ -184,6 +183,7 @@ namespace Plang.Options
                     checkerConfiguration.StrategyBound = (int)(uint)option.Value;
                     break;
                 case "sch-rl":
+                case "sch-pattern":
                     checkerConfiguration.SchedulingStrategy = option.LongName.Substring(4);
                     checkerConfiguration.IsProgramStateHashingEnabled = true;
                     break;

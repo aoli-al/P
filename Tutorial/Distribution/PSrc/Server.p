@@ -20,14 +20,10 @@ machine ClientA
     state SendRequests {
         entry {
             var e: tEvent;
-            if (index < 2) {
-                if ($$) {
-                    e = (eId = index, client = this);
-                    send server, eEventA, e;
-                    index = index + 1;
-                }
-                send this, eNextEvent;
-            }
+            e = (eId = index, client = this);
+            send server, eEventA, e;
+            send server, eEventA, e;
+
         }
         on eNextEvent goto SendRequests;
     }
@@ -48,14 +44,9 @@ machine ClientB
     state SendRequests {
         entry {
             var e: tEvent;
-            if (index < 2) {
-                if ($$) {
-                    e = (eId = index, client = this);
-                    send server, eEventB, e;
-                    index = index + 1;
-                }
-                send this, eNextEvent;
-            }
+            e = (eId = index, client = this);
+            send server, eEventB, e;
+            send server, eEventB, e;
         }
         on eNextEvent goto SendRequests;
     }
@@ -76,14 +67,9 @@ machine ClientC
     state SendRequests {
         entry {
             var e: tEvent;
-            if (index < 2) {
-                if ($$) {
-                    e = (eId = index, client = this);
-                    send server, eEventC, e;
-                    index = index + 1;
-                }
-                send this, eNextEvent;
-            }
+            e = (eId = index, client = this);
+            send server, eEventC, e;
+            send server, eEventC, e;
         }
         on eNextEvent goto SendRequests;
     }
@@ -96,6 +82,8 @@ machine Server
     start state ReceiveEvents {
         entry {
             new ClientA(this);
+            new ClientB(this);
+            new ClientC(this);
         }
         on eEventA do (req: tEvent) {
             print "eEventA processed";
@@ -108,6 +96,8 @@ machine Server
         }
     }
 }
+
+
 
 // Run the same operation
 

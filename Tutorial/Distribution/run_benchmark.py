@@ -13,7 +13,7 @@ def run_test():
         if i % 100 == 0:
             print(i)
         out = open(os.path.join("logs", f"{i}.txt"), "w")
-        command = ["dotnet", f"{HOME}/repos/P/Bld/Drops/Release/Binaries/net6.0/p.dll", "check", "-v", "-tc", "tc"]
+        command = ["dotnet", f"{HOME}/repos/P/Bld/Drops/Release/Binaries/net6.0/p.dll", "check", "--sch-pattern", "-v", "-tc", "tc"]
         subprocess.call(command, stdout=out)
 
 
