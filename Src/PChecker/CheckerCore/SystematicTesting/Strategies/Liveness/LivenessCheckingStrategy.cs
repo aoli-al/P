@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System.Collections.Generic;
+using PChecker.Feedback.EventMatcher;
 using PChecker.Specifications.Monitors;
 using PChecker.SystematicTesting.Operations;
 
@@ -82,6 +83,11 @@ namespace PChecker.SystematicTesting.Strategies.Liveness
         public virtual void Reset()
         {
             SchedulingStrategy.Reset();
+        }
+
+        public void SetNFA(Nfa nfa)
+        {
+            SchedulingStrategy.SetNFA(nfa);
         }
     }
 }

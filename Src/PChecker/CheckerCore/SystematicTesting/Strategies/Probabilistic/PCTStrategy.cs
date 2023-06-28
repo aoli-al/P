@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using PChecker.Feedback.EventMatcher;
 using PChecker.IO.Debugging;
 using PChecker.Random;
 using PChecker.SystematicTesting.Operations;
@@ -54,6 +55,8 @@ namespace PChecker.SystematicTesting.Strategies.Probabilistic
         /// </summary>
         private readonly SortedSet<int> PriorityChangePoints;
 
+        private Nfa _nfa = null;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="PCTStrategy"/> class.
         /// </summary>
@@ -72,7 +75,7 @@ namespace PChecker.SystematicTesting.Strategies.Probabilistic
         public bool GetNextOperation(AsyncOperation current, IEnumerable<AsyncOperation> ops, out AsyncOperation next)
         {
             next = null;
-            var enabledOperations = ops.Where(op => op.Status is AsyncOperationStatus.Enabled).ToList();
+            var enabledOperations = _nfa != null ? _nfa.FindHighPriorityOperations(ops) : ops.Where(op => op.Status is AsyncOperationStatus.Enabled).ToList();
             if (enabledOperations.Count == 0)
             {
                 return false;
@@ -155,8 +158,8 @@ namespace PChecker.SystematicTesting.Strategies.Probabilistic
         public string GetDescription()
         {
             var text = $"pct[priority change points '{MaxPrioritySwitchPoints}' [" +
-                string.Join(", ", PriorityChangePoints.ToArray()) +
-                "], seed '" + RandomValueGenerator.Seed + "']";
+                       string.Join(", ", PriorityChangePoints.ToArray()) +
+                       "], seed '" + RandomValueGenerator.Seed + "']";
             return text;
         }
 
@@ -273,6 +276,11 @@ namespace PChecker.SystematicTesting.Strategies.Probabilistic
             ScheduledSteps = 0;
             PrioritizedOperations.Clear();
             PriorityChangePoints.Clear();
+        }
+
+        public void SetNFA(Nfa nfa)
+        {
+            _nfa = nfa;
         }
     }
 }

@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System.Collections.Generic;
+using PChecker.Feedback.EventMatcher;
 using PChecker.SystematicTesting.Operations;
 
 namespace PChecker.SystematicTesting.Strategies.Special
@@ -106,6 +107,12 @@ namespace PChecker.SystematicTesting.Strategies.Special
         {
             PrefixStrategy.Reset();
             SuffixStrategy.Reset();
+        }
+
+        public void SetNFA(Nfa nfa)
+        {
+            PrefixStrategy.SetNFA(nfa);
+            SuffixStrategy.SetNFA(nfa);
         }
     }
 }

@@ -10,5 +10,4 @@ internal interface IFeedbackGuidedStrategy: ISchedulingStrategy
     public int CurrentInputIndex();
     public HashSet<int> GetAllCoveredStates();
     public List<string> GetLastSavedScheduling();
-    public void SetNFA(Nfa nfa);
 }

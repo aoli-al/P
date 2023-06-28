@@ -5,10 +5,11 @@ using System.Linq;
 using System.Net.Mail;
 using Antlr4.Runtime.Atn;
 using PChecker.Actors.Events;
+using PChecker.SystematicTesting.Operations;
 
 namespace PChecker.Feedback.EventMatcher;
 
-public class Nfa
+internal class Nfa
 {
     private int _initState;
     public int InitState
@@ -435,5 +436,43 @@ public class Nfa
         nfa.FinalState = nfa.Size - 1;
 
         return nfa;
+    }
+
+    public List<AsyncOperation> FindHighPriorityOperations(IEnumerable<AsyncOperation> ops)
+    {
+        var highOps = ops.Where(it =>
+
+            {
+                if (it.Status == AsyncOperationStatus.Enabled)
+                {
+                    if (it is ActorOperation act)
+                    {
+                        if (act.Type == AsyncOperationType.Send)
+                        {
+                            if (act.LastEvent != null)
+                            {
+                                if (InterestingEvents.Contains(act.LastEvent.GetType().Name))
+                                {
+                                    return false;
+                                }
+                            }
+                        }
+                    }
+                    return true;
+                }
+                return false;
+            }
+        ).ToList();
+        if (highOps.Count != 0)
+        {
+            return highOps;
+        }
+        return ops.Where(
+            op =>
+            {
+                return op.Status is AsyncOperationStatus.Enabled;
+            }
+        ).ToList();
+
     }
 }

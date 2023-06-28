@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System.Collections.Generic;
+using PChecker.Feedback.EventMatcher;
 using PChecker.SystematicTesting.Operations;
 
 namespace PChecker.SystematicTesting.Strategies
@@ -72,5 +73,8 @@ namespace PChecker.SystematicTesting.Strategies
         /// parent strategies to reset child strategies.
         /// </summary>
         void Reset();
+
+
+        public void SetNFA(Nfa nfa);
     }
 }

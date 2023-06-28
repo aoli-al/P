@@ -6,7 +6,7 @@ using PChecker.Actors.Events;
 
 namespace PChecker.Feedback.EventMatcher;
 
-public class Dfa
+internal class Dfa
 {
     // Start state
     public int InitState;

@@ -75,7 +75,8 @@ namespace Plang.Options
             advancedGroup.AddArgument("graph-bug", null, "Output a DGML graph of the iteration that found a bug", typeof(bool));
             advancedGroup.AddArgument("graph", null, "Output a DGML graph of all test iterations whether a bug was found or not", typeof(bool));
             advancedGroup.AddArgument("xml-trace", null, "Specify a filename for XML runtime log output to be written to", typeof(bool));
-            
+            advancedGroup.AddArgument("unbiased", null, "Use unbiased sampling based on input pattern", typeof(bool));
+
         }
 
         /// <summary>
@@ -136,6 +137,9 @@ namespace Plang.Options
                 case "debug":
                     checkerConfiguration.EnableDebugging = true;
                     Debug.IsEnabled = true;
+                    break;
+                case "unbiased":
+                    checkerConfiguration.UnbiasedSampling = true;
                     break;
                 case "timeout":
                     checkerConfiguration.Timeout = (int)(uint)option.Value;

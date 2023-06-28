@@ -395,9 +395,9 @@ namespace PChecker.SystematicTesting
 
                     var maxIterations = IsReplayModeEnabled ? 1 : _checkerConfiguration.TestingIterations;
 
-                    if (Strategy is IFeedbackGuidedStrategy s)
+                    if (_checkerConfiguration.UnbiasedSampling)
                     {
-                        s.SetNFA(nfa);
+                        Strategy.SetNFA(nfa);
                     }
                     for (var i = 0; i < maxIterations; i++)
                     {

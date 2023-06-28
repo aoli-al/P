@@ -38,6 +38,8 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
 
     private int _currentInputIndex = 0;
 
+    private Nfa? _nfa = null;
+
     public int CurrentInputIndex()
     {
         return _currentInputIndex;
@@ -56,7 +58,7 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
     /// <inheritdoc/>
     public virtual bool GetNextOperation(AsyncOperation current, IEnumerable<AsyncOperation> ops, out AsyncOperation next)
     {
-        var enabledOperations = ops.Where(op => op.Status is AsyncOperationStatus.Enabled).ToList();
+        var enabledOperations = _nfa != null? _nfa.FindHighPriorityOperations(ops) : ops.Where(op => op.Status is AsyncOperationStatus.Enabled).ToList();
         next = Generator.ScheduleGenerator.NextRandomOperation(enabledOperations, current);
         ScheduledSteps++;
         return next != null;
@@ -209,5 +211,6 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
 
     public virtual void SetNFA(Nfa nfa)
     {
+        _nfa = nfa;
     }
 }

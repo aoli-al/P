@@ -20,35 +20,7 @@ internal class UnbiasedSchedulingStrategy<TInput, TSchedule> : FeedbackGuidedStr
 
     public override bool GetNextOperation(AsyncOperation current, IEnumerable<AsyncOperation> ops, out AsyncOperation next)
     {
-        var highPriority = ops.Where(it =>
-
-            {
-                if (it.Status == AsyncOperationStatus.Enabled)
-                {
-                    if (it is ActorOperation act)
-                    {
-                        if (act.Type == AsyncOperationType.Send)
-                        {
-                            if (act.LastEvent != null)
-                            {
-                                if (_nfa.InterestingEvents.Contains(act.LastEvent.GetType().Name))
-                                {
-                                    return false;
-                                }
-                            }
-                        }
-                    }
-                    return true;
-                }
-                return false;
-            }
-        ).ToList();
-
-        if (highPriority.Count == 0)
-        {
-            highPriority = ops.ToList();
-        }
-
+        var highPriority = _nfa.FindHighPriorityOperations(ops);
         var result = base.GetNextOperation(current, highPriority, out next);
         return result;
     }

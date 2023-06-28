@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using PChecker.Feedback.EventMatcher;
 using PChecker.IO.Debugging;
 using PChecker.SystematicTesting.Operations;
 using PChecker.SystematicTesting.Traces;
@@ -327,6 +328,11 @@ namespace PChecker.SystematicTesting.Strategies.Special
         {
             ScheduledSteps = 0;
             SuffixStrategy?.Reset();
+        }
+
+        public void SetNFA(Nfa nfa)
+        {
+            // do nothing.
         }
     }
 }

@@ -127,6 +127,10 @@ namespace PChecker
         [DataMember]
         public bool ConsiderDepthBoundHitAsBug;
 
+
+        [DataMember]
+        public bool UnbiasedSampling;
+
         /// <summary>
         /// A strategy-specific bound.
         /// </summary>
@@ -272,6 +276,7 @@ namespace PChecker
             TestingSchedulerEndPoint = "CoyoteTestScheduler.4723bb92-c413-4ecb-8e8a-22eb2ba22234";
             TestingProcessId = 0;
             ConsiderDepthBoundHitAsBug = false;
+            UnbiasedSampling = false;
             StrategyBound = 0;
 
             IsLivenessCheckingEnabled = true;
