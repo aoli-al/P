@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using PChecker.Actors;
 using PChecker.Coverage;
+using PChecker.Feedback.EventMatcher;
 using PChecker.Generator;
 using PChecker.Random;
 using PChecker.SystematicTesting.Operations;
@@ -204,5 +205,9 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
     public List<string> GetLastSavedScheduling()
     {
         return LastSavedSchedule;
+    }
+
+    public virtual void SetNFA(Nfa nfa)
+    {
     }
 }

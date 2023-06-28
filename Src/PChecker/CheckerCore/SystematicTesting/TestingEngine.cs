@@ -266,8 +266,8 @@ namespace PChecker.SystematicTesting
                 // Strategy = new UnbiasedSchedulingQLearning(checkerConfiguration.MaxUnfairSchedulingSteps, RandomValueGenerator);
                 // Strategy = new UnbiasedSchedulingQLearning(
                 //     _checkerConfiguration, new RandomInputGenerator(checkerConfiguration), new RandomScheduleGenerator(checkerConfiguration));
-                Strategy = new UnbiasedSchedulingStrategy<RandomInputGenerator, PctScheduleGenerator>(
-                    _checkerConfiguration, new RandomInputGenerator(checkerConfiguration), new PctScheduleGenerator(checkerConfiguration));
+                Strategy = new UnbiasedSchedulingStrategy<RandomInputGenerator, RandomScheduleGenerator>(
+                    _checkerConfiguration, new RandomInputGenerator(checkerConfiguration), new RandomScheduleGenerator(checkerConfiguration));
             }
             else if (checkerConfiguration.SchedulingStrategy is "2stagefeedback")
             {
@@ -394,6 +394,11 @@ namespace PChecker.SystematicTesting
                     nfa.Show();
 
                     var maxIterations = IsReplayModeEnabled ? 1 : _checkerConfiguration.TestingIterations;
+
+                    if (Strategy is IFeedbackGuidedStrategy s)
+                    {
+                        s.SetNFA(nfa);
+                    }
                     for (var i = 0; i < maxIterations; i++)
                     {
                         if (CancellationTokenSource.IsCancellationRequested)

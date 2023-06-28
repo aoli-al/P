@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using PChecker.Actors;
+using PChecker.Actors.Events;
 
 namespace PChecker.SystematicTesting.Operations
 {
@@ -35,6 +36,7 @@ namespace PChecker.SystematicTesting.Operations
         /// any event in the set allows this operation to resume.
         /// </summary>
         private readonly HashSet<Type> EventDependencies;
+
 
         /// <summary>
         /// True if it should skip the next receive scheduling point,
