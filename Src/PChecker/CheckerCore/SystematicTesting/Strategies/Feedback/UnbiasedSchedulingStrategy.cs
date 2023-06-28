@@ -36,29 +36,28 @@ internal class UnbiasedSchedulingStrategy<TInput, TSchedule> : FeedbackGuidedStr
 
     public override bool GetNextOperation(AsyncOperation current, IEnumerable<AsyncOperation> ops, out AsyncOperation next)
     {
-        _currentChoices += ops.Count();
-
-        var enabledOperations = ops.Where(op => op.Status is AsyncOperationStatus.Enabled).ToList();
-        if (_prevActor == "")
-        {
-            _prevActor = enabledOperations[0].Name + 0;
-            _machineStep[enabledOperations[0].Name] = 0;
-        }
-        else
-        {
-            foreach (var op in enabledOperations)
-            {
-                _machineStep.TryAdd(op.Name, 0);
-                var name = op.Name + _machineStep[op.Name];
-                if (!_enabledOperators.Contains(name))
-                {
-                    _updated |= _allOperators.Add(name);
-                    _happensBefore.TryAdd(_prevActor, new());
-                    _updated |= _happensBefore[_prevActor].TryAdd(name, true);
-                    _enabledOperators.Add(name);
-                }
-            }
-        }
+        // _currentChoices += ops.Count();
+        // var enabledOperations = ops.Where(op => op.Status is AsyncOperationStatus.Enabled).ToList();
+        // if (_prevActor == "")
+        // {
+        //     _prevActor = enabledOperations[0].Name + 0;
+        //     _machineStep[enabledOperations[0].Name] = 0;
+        // }
+        // else
+        // {
+        //     foreach (var op in enabledOperations)
+        //     {
+        //         _machineStep.TryAdd(op.Name, 0);
+        //         var name = op.Name + _machineStep[op.Name];
+        //         if (!_enabledOperators.Contains(name))
+        //         {
+        //             _updated |= _allOperators.Add(name);
+        //             _happensBefore.TryAdd(_prevActor, new());
+        //             _updated |= _happensBefore[_prevActor].TryAdd(name, true);
+        //             _enabledOperators.Add(name);
+        //         }
+        //     }
+        // }
         //
         // if (enabledOperations.Count == 0)
         // {
@@ -164,30 +163,37 @@ internal class UnbiasedSchedulingStrategy<TInput, TSchedule> : FeedbackGuidedStr
         // {
         if (result)
         {
-            _prevActor = next.Name + _machineStep[next.Name];
-            _machineStep[next.Name] += 1;
-            _eventLast.TryAdd(_prevActor, Int32.MaxValue);
-            if (_prevActor.Contains("KFCClient"))
-            // if (_prevActor.Contains("SplitWorker") || _prevActor.Contains("CoalesceWorker") || _prevActor.Contains("KFCClient"))
-            // if (true)
+            if (next is ActorOperation actor)
             {
-                if (ScheduledSteps < _eventLast[_prevActor])
+                _machineStep.TryAdd(actor.Actor.Id.Type, 0);
+                _prevActor = actor.Actor.Id.Type + _machineStep[actor.Actor.Id.Type];
+                _machineStep[actor.Actor.Id.Type] += 1;
+                // if (_prevActor.Contains("KFCClient"))
+                // if (_prevActor.Contains("Client"))
+                if (_prevActor.Contains("KFCClient0"))
+                // if (_prevActor.Contains("SplitWorker") || _prevActor.Contains("CoalesceWorker") || _prevActor.Contains("KFCClient"))
+                // if (true)
                 {
-                    _shouldSaveThisScheduling = true;
-                    _eventLast[_prevActor] = ScheduledSteps;
-                    var prev = _responsible.GetValueOrDefault(_prevActor, null);
-                    if (prev != null && _coveredPrefix.ContainsKey(prev))
+                    _eventLast.TryAdd(_prevActor, Int32.MaxValue);
+                    // _eventLast.TryAdd(_prevActor, 0);
+                    if (ScheduledSteps < _eventLast[_prevActor])
                     {
-                        _coveredPrefix[prev] -= 1;
-                        if (_coveredPrefix[prev] == 0)
+                        _shouldSaveThisScheduling = true;
+                        _eventLast[_prevActor] = ScheduledSteps;
+                        var prev = _responsible.GetValueOrDefault(_prevActor, null);
+                        if (prev != null && _coveredPrefix.ContainsKey(prev))
                         {
-                            _coveredPrefix.Remove(prev);
-                            SavedGenerators.Remove(prev);
+                            _coveredPrefix[prev] -= 1;
+                            if (_coveredPrefix[prev] == 0)
+                            {
+                                _coveredPrefix.Remove(prev);
+                                SavedGenerators.Remove(prev);
+                            }
                         }
+                        _responsible[_prevActor] = Generator;
+                        _coveredPrefix.TryAdd(Generator, 0);
+                        _coveredPrefix[Generator] += 1;
                     }
-                    _responsible[_prevActor] = Generator;
-                    _coveredPrefix.TryAdd(Generator, 0);
-                    _coveredPrefix[Generator] += 1;
                 }
             }
         }
@@ -212,6 +218,7 @@ internal class UnbiasedSchedulingStrategy<TInput, TSchedule> : FeedbackGuidedStr
         if (_shouldSaveThisScheduling)
         {
             SavedGenerators.Add(Generator);
+            LastSavedSchedule = new(runtime.EventPatternObserver.SavedEventTypes);
         }
         // base.ObserveRunningResults(runtime);
     }

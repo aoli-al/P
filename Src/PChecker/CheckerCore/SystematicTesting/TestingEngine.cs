@@ -266,8 +266,8 @@ namespace PChecker.SystematicTesting
                 // Strategy = new UnbiasedSchedulingQLearning(checkerConfiguration.MaxUnfairSchedulingSteps, RandomValueGenerator);
                 // Strategy = new UnbiasedSchedulingQLearning(
                 //     _checkerConfiguration, new RandomInputGenerator(checkerConfiguration), new RandomScheduleGenerator(checkerConfiguration));
-                Strategy = new UnbiasedSchedulingStrategy<RandomInputGenerator, RandomScheduleGenerator>(
-                    _checkerConfiguration, new RandomInputGenerator(checkerConfiguration), new RandomScheduleGenerator(checkerConfiguration));
+                Strategy = new UnbiasedSchedulingStrategy<RandomInputGenerator, PctScheduleGenerator>(
+                    _checkerConfiguration, new RandomInputGenerator(checkerConfiguration), new PctScheduleGenerator(checkerConfiguration));
             }
             else if (checkerConfiguration.SchedulingStrategy is "2stagefeedback")
             {
@@ -376,11 +376,11 @@ namespace PChecker.SystematicTesting
                 {
                     // Invokes the user-specified initialization method.
                     TestMethodInfo.InitializeAllIterations();
-                    var pattern = "eBlockWorkItem{wType:\"1\"}," +
-                                  "eBlockWorkItem{wType:\"4\"},eBlockWorkItem{wType:\"*\"}+," +
+                    var pattern = "eBlockWorkItem{wType:\"2\"}," +
+                                  "eBlockWorkItem{wType:\"2\"}," +
+                                  "eBlockWorkItem{wType:\"*\"}*," +
                                   "eBlockWorkItem{wType:\"6\"},eBlockWorkItem{wType:\"*\"}+," +
                                   "eBlockWorkItem{wType:\"4\"},eBlockWorkItem{wType:\"*\"}+," +
-                                  "eBlockWorkItem{wType:\"6\"},eBlockWorkItem{wType:\"*\"}+," +
                                   "eBlockWorkItem{wType:\"*\"}+";
                     // Add bounds
                     // Notion of sender
@@ -562,6 +562,7 @@ namespace PChecker.SystematicTesting
                     {
                         Logger.WriteLine($"..... Current input: {s.CurrentInputIndex()}, total saved: {s.TotalSavedInputs()}");
                         Logger.WriteLine($"..... Covered states: {string.Join(',', s.GetAllCoveredStates())}");
+                        Logger.WriteLine($"..... Last saved: {string.Join(',', s.GetLastSavedScheduling())}");
                     }
                 }
                 Logger.WriteLine($"..... Last scheduling: {string.Join(',', runtime.EventPatternObserver.SavedEventTypes)}");

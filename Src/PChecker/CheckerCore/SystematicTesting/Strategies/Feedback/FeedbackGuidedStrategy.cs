@@ -31,7 +31,7 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
 
     protected readonly List<StrategyGenerator> SavedGenerators = new();
 
-    private readonly int _maxMutationsWithoutNewSaved = 3;
+    private readonly int _maxMutationsWithoutNewSaved = 20;
 
     private int _numMutationsWithoutNewSaved = 0;
 
@@ -135,7 +135,7 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
                            prevSize != _visitedEventSeqs.Count;
             if (updated)
             {
-                LastSavedSchedule = runtime.EventPatternObserver.SavedEventTypes;
+                LastSavedSchedule = new(runtime.EventPatternObserver.SavedEventTypes);
                 SavedGenerators.Add(Generator);
                 _numMutationsWithoutNewSaved = 0;
             }
@@ -146,7 +146,7 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
             _visitedStates.UnionWith(runtime.EventPatternObserver.Matcher.VisistedStates);
             if (_visitedStates.Count != prevStates)
             {
-                LastSavedSchedule = runtime.EventPatternObserver.SavedEventTypes;
+                LastSavedSchedule = new(runtime.EventPatternObserver.SavedEventTypes);
                 SavedGenerators.Clear();
                 SavedGenerators.Add(Generator);
                 _numMutationsWithoutNewSaved = 0;
