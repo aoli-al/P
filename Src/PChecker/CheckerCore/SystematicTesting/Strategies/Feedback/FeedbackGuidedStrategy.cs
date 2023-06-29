@@ -40,6 +40,8 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
 
     private Nfa? _nfa = null;
 
+    private bool _matched = false;
+
     public int CurrentInputIndex()
     {
         return _currentInputIndex;
@@ -130,17 +132,21 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
     public virtual void ObserveRunningResults(ControlledRuntime runtime)
     {
         // TODO: implement real feedback.
-        if (runtime.EventPatternObserver.IsMatched())
+        if (runtime.EventPatternObserver.IsMatched() || _matched)
         {
-            int prevSize = _visitedEventSeqs.Count;
-            _visitedEventSeqs.UnionWith(runtime.EventSeqObserver.SavedEvents);
-            bool updated = _visitedEvents.Merge(runtime.GetCoverageInfo().EventInfo) ||
-                           prevSize != _visitedEventSeqs.Count;
-            if (updated)
+            _matched |= runtime.EventPatternObserver.IsMatched();
+            if (runtime.EventPatternObserver.IsMatched())
             {
-                LastSavedSchedule = new(runtime.EventPatternObserver.SavedEventTypes);
-                SavedGenerators.Add(Generator);
-                _numMutationsWithoutNewSaved = 0;
+                int prevSize = _visitedEventSeqs.Count;
+                _visitedEventSeqs.UnionWith(runtime.EventSeqObserver.SavedEvents);
+                bool updated = _visitedEvents.Merge(runtime.GetCoverageInfo().EventInfo) ||
+                               prevSize != _visitedEventSeqs.Count;
+                if (updated)
+                {
+                    LastSavedSchedule = new(runtime.EventPatternObserver.SavedEventTypes);
+                    SavedGenerators.Add(Generator);
+                    _numMutationsWithoutNewSaved = 0;
+                }
             }
         }
         else

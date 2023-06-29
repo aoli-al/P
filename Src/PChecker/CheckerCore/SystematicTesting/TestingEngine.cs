@@ -562,7 +562,8 @@ namespace PChecker.SystematicTesting
                 {
                     Logger.WriteLine($"..... Iter: {iteration}, covered event states: {TestReport.CoverageInfo.EventInfo.ExploredNumState()}, " +
                                      $"covered event seqs: {TestReport.EventSeqStates.Count}, " +
-                                     $"valid schedules: {TestReport.ValidScheduling}");
+                                     $"valid schedules: {TestReport.ValidScheduling}, " +
+                                     $"matched: {runtime.EventPatternObserver.IsMatched()}");
                     if (Strategy is IFeedbackGuidedStrategy s)
                     {
                         Logger.WriteLine($"..... Current input: {s.CurrentInputIndex()}, total saved: {s.TotalSavedInputs()}");
