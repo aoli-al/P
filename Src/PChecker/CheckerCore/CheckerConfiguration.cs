@@ -234,6 +234,9 @@ namespace PChecker
         [DataMember]
         public uint TestingProcessId;
 
+        [DataMember]
+        public string Pattern;
+
         /// <summary>
         /// Additional assembly specifications to instrument for code coverage, besides those in the
         /// dependency graph between <see cref="AssemblyToBeAnalyzed"/> and the Microsoft.Coyote DLLs.
@@ -274,6 +277,7 @@ namespace PChecker
             MaxUnfairSchedulingSteps = 10000;
             UserExplicitlySetMaxFairSchedulingSteps = false;
             TestingSchedulerEndPoint = "CoyoteTestScheduler.4723bb92-c413-4ecb-8e8a-22eb2ba22234";
+            Pattern = "";
             TestingProcessId = 0;
             ConsiderDepthBoundHitAsBug = false;
             UnbiasedSampling = false;

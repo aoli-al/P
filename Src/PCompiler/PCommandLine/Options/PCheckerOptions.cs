@@ -76,6 +76,7 @@ namespace Plang.Options
             advancedGroup.AddArgument("graph", null, "Output a DGML graph of all test iterations whether a bug was found or not", typeof(bool));
             advancedGroup.AddArgument("xml-trace", null, "Specify a filename for XML runtime log output to be written to", typeof(bool));
             advancedGroup.AddArgument("unbiased", null, "Use unbiased sampling based on input pattern", typeof(bool));
+            advancedGroup.AddArgument("pattern", null, "The path to the pattern file.", typeof(string));
 
         }
 
@@ -255,6 +256,9 @@ namespace Plang.Options
                     break;
                 case "fail-on-maxsteps":
                     checkerConfiguration.ConsiderDepthBoundHitAsBug = true;
+                    break;
+                case "pattern":
+                    checkerConfiguration.Pattern = File.ReadAllText((string) option.Value);
                     break;
                 default:
                     throw new Exception(string.Format("Unhandled parsed argument: '{0}'", option.LongName));

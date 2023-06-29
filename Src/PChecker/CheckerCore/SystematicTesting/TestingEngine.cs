@@ -376,29 +376,20 @@ namespace PChecker.SystematicTesting
                 {
                     // Invokes the user-specified initialization method.
                     TestMethodInfo.InitializeAllIterations();
-                    var pattern = "eBlockWorkItem{wType:\"2\"}," +
-                                  "eBlockWorkItem{wType:\"2\"}," +
-                                  "eBlockWorkItem{wType:\"*\"}*," +
-                                  "eBlockWorkItem{wType:\"6\"},eBlockWorkItem{wType:\"*\"}+," +
-                                  "eBlockWorkItem{wType:\"4\"},eBlockWorkItem{wType:\"*\"}+," +
-                                  "eBlockWorkItem{wType:\"*\"}+";
                     // Add bounds
                     // Notion of sender
                     // Where are those patterns from?
                     // Paxos
-                    var parser = new EventLangParser(new CommonTokenStream(new EventLangLexer(new AntlrInputStream(pattern))));
-                    var visitor = new EventLangVisitor();
-                    var node = visitor.Visit(parser.exp());
 
-                    var nfa = Nfa.TreeToNFA(node);
-                    nfa.Show();
+                    BaseNode node;
+
+                    var parser = new EventLangParser(new CommonTokenStream(new EventLangLexer(new AntlrInputStream(_checkerConfiguration.Pattern))));
+                    var visitor = new EventLangVisitor();
+                    node = visitor.Visit(parser.exp());
+
 
                     var maxIterations = IsReplayModeEnabled ? 1 : _checkerConfiguration.TestingIterations;
 
-                    if (_checkerConfiguration.UnbiasedSampling)
-                    {
-                        Strategy.SetNFA(nfa);
-                    }
                     for (var i = 0; i < maxIterations; i++)
                     {
                         if (CancellationTokenSource.IsCancellationRequested)
@@ -406,7 +397,11 @@ namespace PChecker.SystematicTesting
                             break;
                         }
 
-                        nfa = Nfa.TreeToNFA(node);
+                        var nfa = Nfa.TreeToNFA(node);
+                        if (_checkerConfiguration.UnbiasedSampling)
+                        {
+                            Strategy.SetNFA(nfa);
+                        }
                         // Runs a new testing iteration.
                         RunNextIteration(i, nfa);
 
