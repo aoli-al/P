@@ -29,7 +29,7 @@ namespace PChecker.SystematicTesting.Strategies.Probabilistic
         /// </summary>
         protected int ScheduledSteps;
 
-        private Nfa? _nfa = null;
+        private NfaMatcher? _nfa = null;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RandomStrategy"/> class.
@@ -123,9 +123,9 @@ namespace PChecker.SystematicTesting.Strategies.Probabilistic
             ScheduledSteps = 0;
         }
 
-        public void SetNFA(Nfa nfa)
+        public void SetNFA(NfaMatcher nfaMatcher)
         {
-            _nfa = nfa;
+            _nfa = nfaMatcher;
         }
     }
 }

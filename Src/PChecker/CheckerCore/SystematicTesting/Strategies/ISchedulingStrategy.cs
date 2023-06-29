@@ -75,6 +75,6 @@ namespace PChecker.SystematicTesting.Strategies
         void Reset();
 
 
-        public void SetNFA(Nfa nfa);
+        public void SetNFA(NfaMatcher nfaMatcher);
     }
 }

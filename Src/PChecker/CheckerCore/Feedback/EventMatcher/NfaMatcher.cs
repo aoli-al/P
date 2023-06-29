@@ -9,7 +9,7 @@ using PChecker.SystematicTesting.Operations;
 
 namespace PChecker.Feedback.EventMatcher;
 
-internal class Nfa
+internal class NfaMatcher: IMatcher
 {
     private int _initState;
     public int InitState
@@ -41,13 +41,24 @@ internal class Nfa
     public Dictionary<int, Dictionary<int, EventNode>> Transitions;
     public HashSet<int> CurrentStates = new();
 
-    public Nfa(Nfa nfa)
+    public NfaMatcher(NfaMatcher nfaMatcher)
     {
-        InitState = nfa.InitState;
-        FinalState = nfa.FinalState;
-        Size = nfa.Size;
-        Inputs = nfa.Inputs;
-        Transitions = nfa.Transitions;
+        InitState = nfaMatcher.InitState;
+        FinalState = nfaMatcher.FinalState;
+        Size = nfaMatcher.Size;
+        Inputs = nfaMatcher.Inputs;
+        Transitions = nfaMatcher.Transitions;
+    }
+
+    public void Reset()
+    {
+        VisistedStates.Clear();
+        CurrentStates = new HashSet<int>() { _initState };
+    }
+
+    public HashSet<int> GetVisitedStates()
+    {
+        return VisistedStates;
     }
 
     /// <summary>
@@ -57,7 +68,7 @@ internal class Nfa
     /// <param name="size_">Amount of states.</param>
     /// <param name="initState">Initial state.</param>
     /// <param name="finalState">Final state.</param>
-    public Nfa(int size, int initState, int finalState)
+    public NfaMatcher(int size, int initState, int finalState)
     {
         InitState = initState;
         FinalState = finalState;
@@ -185,7 +196,7 @@ internal class Nfa
     /// Fills states 0 up to other.size with other's states.
     /// </summary>
     /// <param name="other"></param>
-    public void FillStates(Nfa other)
+    public void FillStates(NfaMatcher other)
     {
         foreach (var keyValuePair in other.Transitions)
         {
@@ -294,7 +305,7 @@ internal class Nfa
     /// </summary>
     /// <param name="tree"></param>
     /// <returns></returns>
-    public static Nfa TreeToNFA(BaseNode tree)
+    public static NfaMatcher TreeToNFA(BaseNode tree)
     {
         switch (tree)
         {
@@ -331,9 +342,9 @@ internal class Nfa
     /// </summary>
     /// <param name="in"></param>
     /// <returns></returns>
-    public static Nfa BuildNFABasic(EventNode @in)
+    public static NfaMatcher BuildNFABasic(EventNode @in)
     {
-        Nfa basic = new Nfa(2, 0, 1);
+        NfaMatcher basic = new NfaMatcher(2, 0, 1);
 
         basic.AddTrans(0, 1, @in);
 
@@ -346,7 +357,7 @@ internal class Nfa
     /// <param name="nfa1"></param>
     /// <param name="nfa2"></param>
     /// <returns></returns>
-    public static Nfa BuildNFAAlter(Nfa nfa1, Nfa nfa2)
+    public static NfaMatcher BuildNFAAlter(NfaMatcher nfa1, NfaMatcher nfa2)
     {
         // How this is done: the new nfa must contain all the states in
         // nfa1 and nfa2, plus a new initial and final states.
@@ -360,27 +371,27 @@ internal class Nfa
         nfa2.ShiftStates(nfa1.Size);
 
         // create a new nfa and initialize it with (the shifted) nfa2
-        Nfa newNFA = new Nfa(nfa2);
+        NfaMatcher newNfaMatcher = new NfaMatcher(nfa2);
 
         // nfa1's states take their places in new_nfa
-        newNFA.FillStates(nfa1);
+        newNfaMatcher.FillStates(nfa1);
 
         // Set new initial state and the transitions from it
-        newNFA.AddTrans(0, nfa1.InitState, EventNode.Epsilon);
-        newNFA.AddTrans(0, nfa2.InitState, EventNode.Epsilon);
+        newNfaMatcher.AddTrans(0, nfa1.InitState, EventNode.Epsilon);
+        newNfaMatcher.AddTrans(0, nfa2.InitState, EventNode.Epsilon);
 
-        newNFA.InitState = 0;
+        newNfaMatcher.InitState = 0;
 
         // Make up space for the new final state
-        newNFA.AppendEmptyState();
+        newNfaMatcher.AppendEmptyState();
 
         // Set new final state
-        newNFA.FinalState = newNFA.Size - 1;
+        newNfaMatcher.FinalState = newNfaMatcher.Size - 1;
 
-        newNFA.AddTrans(nfa1.FinalState, newNFA.FinalState, EventNode.Epsilon);
-        newNFA.AddTrans(nfa2.FinalState, newNFA.FinalState, EventNode.Epsilon);
+        newNfaMatcher.AddTrans(nfa1.FinalState, newNfaMatcher.FinalState, EventNode.Epsilon);
+        newNfaMatcher.AddTrans(nfa2.FinalState, newNfaMatcher.FinalState, EventNode.Epsilon);
 
-        return newNFA;
+        return newNfaMatcher;
     }
 
     /// <summary>
@@ -389,26 +400,26 @@ internal class Nfa
     /// <param name="nfa1"></param>
     /// <param name="nfa2"></param>
     /// <returns></returns>
-    public static Nfa BuildNFAConcat(Nfa nfa1, Nfa nfa2)
+    public static NfaMatcher BuildNFAConcat(NfaMatcher nfa1, NfaMatcher nfa2)
     {
         // How this is done: First will come nfa1, then nfa2 (its initial state replaced
         // with nfa1's final state)
         nfa2.ShiftStates(nfa1.Size - 1);
 
         // Creates a new NFA and initialize it with (the shifted) nfa2
-        Nfa newNFA = new Nfa(nfa2);
+        NfaMatcher newNfaMatcher = new NfaMatcher(nfa2);
 
         // nfa1's states take their places in newNFA
         // note: nfa1's final state overwrites nfa2's initial state,
         // thus we get the desired merge automagically (the transition
         // from nfa2's initial state now transits from nfa1's final state)
-        newNFA.FillStates(nfa1);
+        newNfaMatcher.FillStates(nfa1);
 
         // Sets the new initial state (the final state stays nfa2's final state,
         // and was already copied)
-        newNFA.InitState = nfa1.InitState;
+        newNfaMatcher.InitState = nfa1.InitState;
 
-        return newNFA;
+        return newNfaMatcher;
     }
 
     /// <summary>
@@ -416,26 +427,26 @@ internal class Nfa
     /// How this is done: First will come the new initial state, then NFA, then the
     /// new final state
     /// </summary>
-    /// <param name="nfa"></param>
+    /// <param name="nfaMatcher"></param>
     /// <returns></returns>
-    public static Nfa BuildNFAStar(Nfa nfa)
+    public static NfaMatcher BuildNFAStar(NfaMatcher nfaMatcher)
     {
         // Makes room for the new initial state
-        nfa.ShiftStates(1);
+        nfaMatcher.ShiftStates(1);
 
         // Makes room for the new final state
-        nfa.AppendEmptyState();
+        nfaMatcher.AppendEmptyState();
 
         // Adds new transitions
-        nfa.AddTrans(nfa.FinalState, nfa.InitState, EventNode.Epsilon);
-        nfa.AddTrans(0, nfa.InitState, EventNode.Epsilon);
-        nfa.AddTrans(nfa.FinalState, nfa.Size - 1, EventNode.Epsilon);
-        nfa.AddTrans(0, nfa.Size - 1, EventNode.Epsilon);
+        nfaMatcher.AddTrans(nfaMatcher.FinalState, nfaMatcher.InitState, EventNode.Epsilon);
+        nfaMatcher.AddTrans(0, nfaMatcher.InitState, EventNode.Epsilon);
+        nfaMatcher.AddTrans(nfaMatcher.FinalState, nfaMatcher.Size - 1, EventNode.Epsilon);
+        nfaMatcher.AddTrans(0, nfaMatcher.Size - 1, EventNode.Epsilon);
 
-        nfa.InitState = 0;
-        nfa.FinalState = nfa.Size - 1;
+        nfaMatcher.InitState = 0;
+        nfaMatcher.FinalState = nfaMatcher.Size - 1;
 
-        return nfa;
+        return nfaMatcher;
     }
 
     public List<AsyncOperation> FindHighPriorityOperations(IEnumerable<AsyncOperation> ops)

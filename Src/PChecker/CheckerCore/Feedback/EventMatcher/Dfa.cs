@@ -48,7 +48,7 @@ internal class Dfa
     }
 
 
-    public static Dfa SubsetConstruct(Nfa nfa)
+    public static Dfa SubsetConstruct(NfaMatcher nfaMatcher)
     {
         int dfaState = 0;
 
@@ -60,11 +60,11 @@ internal class Dfa
         Dictionary<HashSet<int>, int> dfaStateNum = new( new HashSetEqualityComparer());
 
         HashSet<int> nfaInitial = new HashSet<int>();
-        nfaInitial.Add(nfa.InitState);
+        nfaInitial.Add(nfaMatcher.InitState);
 
         // Initially, EpsilonClosure(nfa.initial) is the only state in the DFAs states
         // and it's unmarked.
-        HashSet<int> first = nfa.EpsilonClosure(nfaInitial);
+        HashSet<int> first = nfaMatcher.EpsilonClosure(nfaInitial);
         unmarkedStates.Add(first);
 
         // The initial dfa state
@@ -85,12 +85,12 @@ internal class Dfa
 
             // If this state contains the NFA's final state, add it to the DFA's set of
             // final states.
-            if(aState.Contains(nfa.FinalState))
+            if(aState.Contains(nfaMatcher.FinalState))
                 dfa.FinalState.Add(dfaStateNum[aState]);
 
-            foreach (var eventNode in nfa.Inputs)
+            foreach (var eventNode in nfaMatcher.Inputs)
             {
-                HashSet<int> next = nfa.EpsilonClosure(nfa.Move(aState, eventNode));
+                HashSet<int> next = nfaMatcher.EpsilonClosure(nfaMatcher.Move(aState, eventNode));
 
                 if (!unmarkedStates.Contains(next) && !markedStates.Contains(next))
                 {

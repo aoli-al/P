@@ -55,7 +55,7 @@ namespace PChecker.SystematicTesting.Strategies.Probabilistic
         /// </summary>
         private readonly SortedSet<int> PriorityChangePoints;
 
-        private Nfa _nfa = null;
+        private NfaMatcher _nfaMatcher = null;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PCTStrategy"/> class.
@@ -75,7 +75,7 @@ namespace PChecker.SystematicTesting.Strategies.Probabilistic
         public bool GetNextOperation(AsyncOperation current, IEnumerable<AsyncOperation> ops, out AsyncOperation next)
         {
             next = null;
-            var enabledOperations = _nfa != null ? _nfa.FindHighPriorityOperations(ops) : ops.Where(op => op.Status is AsyncOperationStatus.Enabled).ToList();
+            var enabledOperations = _nfaMatcher != null ? _nfaMatcher.FindHighPriorityOperations(ops) : ops.Where(op => op.Status is AsyncOperationStatus.Enabled).ToList();
             if (enabledOperations.Count == 0)
             {
                 return false;
@@ -278,9 +278,9 @@ namespace PChecker.SystematicTesting.Strategies.Probabilistic
             PriorityChangePoints.Clear();
         }
 
-        public void SetNFA(Nfa nfa)
+        public void SetNFA(NfaMatcher nfaMatcher)
         {
-            _nfa = nfa;
+            _nfaMatcher = nfaMatcher;
         }
     }
 }

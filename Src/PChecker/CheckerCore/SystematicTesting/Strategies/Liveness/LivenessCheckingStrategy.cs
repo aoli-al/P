@@ -85,9 +85,9 @@ namespace PChecker.SystematicTesting.Strategies.Liveness
             SchedulingStrategy.Reset();
         }
 
-        public void SetNFA(Nfa nfa)
+        public void SetNFA(NfaMatcher nfaMatcher)
         {
-            SchedulingStrategy.SetNFA(nfa);
+            SchedulingStrategy.SetNFA(nfaMatcher);
         }
     }
 }

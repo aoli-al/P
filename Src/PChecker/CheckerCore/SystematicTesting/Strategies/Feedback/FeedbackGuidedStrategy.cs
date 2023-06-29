@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using PChecker.Actors;
 using PChecker.Coverage;
+using PChecker.Feedback;
 using PChecker.Feedback.EventMatcher;
 using PChecker.Generator;
 using PChecker.Random;
@@ -38,7 +39,7 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
 
     private int _currentInputIndex = 0;
 
-    private Nfa? _nfa = null;
+    private NfaMatcher? _nfa = null;
 
     private bool _matched = false;
 
@@ -129,13 +130,13 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
     /// This method observes the results of previous run and prepare for the next run.
     /// </summary>
     /// <param name="runtime">The ControlledRuntime of previous run.</param>
-    public virtual void ObserveRunningResults(ControlledRuntime runtime)
+    public virtual void ObserveRunningResults(EventPatternObserver patternObserver, ControlledRuntime runtime)
     {
         // TODO: implement real feedback.
-        if (runtime.EventPatternObserver.IsMatched() || _matched)
+        if (patternObserver.IsMatched() || _matched)
         {
-            _matched |= runtime.EventPatternObserver.IsMatched();
-            if (runtime.EventPatternObserver.IsMatched())
+            _matched |= patternObserver.IsMatched();
+            if (patternObserver.IsMatched())
             {
                 int prevSize = _visitedEventSeqs.Count;
                 _visitedEventSeqs.UnionWith(runtime.EventSeqObserver.SavedEvents);
@@ -143,7 +144,7 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
                                prevSize != _visitedEventSeqs.Count;
                 if (updated)
                 {
-                    LastSavedSchedule = new(runtime.EventPatternObserver.SavedEventTypes);
+                    LastSavedSchedule = new(patternObserver.SavedEventTypes);
                     SavedGenerators.Add(Generator);
                     _numMutationsWithoutNewSaved = 0;
                 }
@@ -152,10 +153,10 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
         else
         {
             int prevStates = _visitedStates.Count;
-            _visitedStates.UnionWith(runtime.EventPatternObserver.Matcher.VisistedStates);
+            _visitedStates.UnionWith(patternObserver.Matcher.GetVisitedStates());
             if (_visitedStates.Count != prevStates)
             {
-                LastSavedSchedule = new(runtime.EventPatternObserver.SavedEventTypes);
+                LastSavedSchedule = new(patternObserver.SavedEventTypes);
                 SavedGenerators.Clear();
                 SavedGenerators.Add(Generator);
                 _numMutationsWithoutNewSaved = 0;
@@ -215,8 +216,8 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
         return LastSavedSchedule;
     }
 
-    public virtual void SetNFA(Nfa nfa)
+    public virtual void SetNFA(NfaMatcher nfaMatcher)
     {
-        _nfa = nfa;
+        _nfa = nfaMatcher;
     }
 }

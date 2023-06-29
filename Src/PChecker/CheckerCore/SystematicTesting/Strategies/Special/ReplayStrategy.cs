@@ -330,7 +330,7 @@ namespace PChecker.SystematicTesting.Strategies.Special
             SuffixStrategy?.Reset();
         }
 
-        public void SetNFA(Nfa nfa)
+        public void SetNFA(NfaMatcher nfaMatcher)
         {
             // do nothing.
         }

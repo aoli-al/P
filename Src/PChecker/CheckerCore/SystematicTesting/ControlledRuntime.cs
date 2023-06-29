@@ -72,7 +72,6 @@ namespace PChecker.SystematicTesting
 
         internal readonly EventTimeLineObserver TimeLineObserver = new();
         internal readonly EventSeqObserver EventSeqObserver = new();
-        internal readonly EventPatternObserver EventPatternObserver;
 
         
         /// <summary>
@@ -135,7 +134,7 @@ namespace PChecker.SystematicTesting
         /// Initializes a new instance of the <see cref="ControlledRuntime"/> class.
         /// </summary>
         internal ControlledRuntime(CheckerConfiguration checkerConfiguration, ISchedulingStrategy strategy,
-            IRandomValueGenerator valueGenerator, Nfa nfa)
+            IRandomValueGenerator valueGenerator)
             : base(checkerConfiguration, valueGenerator)
         {
             IsExecutionControlled = true;
@@ -153,14 +152,12 @@ namespace PChecker.SystematicTesting
 
             Scheduler = new OperationScheduler(this, strategy, scheduleTrace, CheckerConfiguration);
             TaskController = new TaskController(this, Scheduler);
-            EventPatternObserver = new EventPatternObserver(nfa, this);
 
             // Update the current asynchronous control flow with this runtime instance,
             // allowing future retrieval in the same asynchronous call stack.
             AssignAsyncControlFlowRuntime(this);
             RegisterLog(TimeLineObserver);
             RegisterLog(EventSeqObserver);
-            RegisterLog(EventPatternObserver);
         }
 
         /// <inheritdoc/>

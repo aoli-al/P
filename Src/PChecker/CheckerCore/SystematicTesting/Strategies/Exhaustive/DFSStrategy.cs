@@ -421,7 +421,7 @@ namespace PChecker.SystematicTesting.Strategies.Exhaustive
             }
         }
 
-        public void SetNFA(Nfa nfa)
+        public void SetNFA(NfaMatcher nfaMatcher)
         {
             // do nothing
         }

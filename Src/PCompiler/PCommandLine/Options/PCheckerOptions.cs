@@ -51,7 +51,6 @@ namespace Plang.Options
             var schedulingGroup = Parser.GetOrCreateGroup("scheduling", "Search prioritization options");
             schedulingGroup.AddArgument("sch-random", null, "Choose the random scheduling strategy (this is the default)", typeof(bool));
             schedulingGroup.AddArgument("sch-feedback", null, "Choose the feedback scheduling strategy", typeof(bool));
-            schedulingGroup.AddArgument("sch-pattern", null, "Choose the feedback scheduling strategy", typeof(bool));
             schedulingGroup.AddArgument("sch-2stagefeedback", null, "Choose the 2 stage feedback scheduling strategy", typeof(bool));
 
             schedulingGroup.AddArgument("sch-feedbackpct", null, "Choose the 2 stage feedback scheduling strategy", typeof(uint));
@@ -175,7 +174,6 @@ namespace Plang.Options
                     checkerConfiguration.RandomGeneratorSeed = (uint)option.Value;
                     break;
                 case "sch-random":
-                case "sch-pattern":
                 case "sch-feedback":
                 case "sch-2stagefeedback":
                     checkerConfiguration.SchedulingStrategy = option.LongName.Substring(4);
@@ -283,7 +281,6 @@ namespace Plang.Options
 
             if (checkerConfiguration.SchedulingStrategy != "portfolio" &&
                 checkerConfiguration.SchedulingStrategy != "random" &&
-                checkerConfiguration.SchedulingStrategy != "pattern" &&
                 checkerConfiguration.SchedulingStrategy != "feedback" &&
                 checkerConfiguration.SchedulingStrategy != "feedbackpct" &&
                 checkerConfiguration.SchedulingStrategy != "2stagefeedback" &&

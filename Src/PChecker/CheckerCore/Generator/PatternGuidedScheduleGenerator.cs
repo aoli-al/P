@@ -10,7 +10,7 @@ namespace PChecker.Generator;
 
 internal class PatternGuidedScheduleGenerator : IScheduleGenerator<PatternGuidedScheduleGenerator>
 {
-    public Nfa nfa;
+    public NfaMatcher NfaMatcher;
     public PatternGuidedScheduleGenerator Mutate()
     {
         return this;

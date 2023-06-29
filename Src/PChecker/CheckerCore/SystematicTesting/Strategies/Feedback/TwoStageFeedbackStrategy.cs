@@ -1,3 +1,4 @@
+using PChecker.Feedback;
 using PChecker.Generator;
 using PChecker.Random;
 
@@ -17,10 +18,10 @@ internal class TwoStageFeedbackStrategy<TInput, TSchedule> : FeedbackGuidedStrat
     {
     }
 
-    public override void ObserveRunningResults(ControlledRuntime runtime)
+    public override void ObserveRunningResults(EventPatternObserver patternObserver, ControlledRuntime runtime)
     {
         int numSavedInput = SavedGenerators.Count;
-        base.ObserveRunningResults(runtime);
+        base.ObserveRunningResults(patternObserver, runtime);
         if (SavedGenerators.Count != numSavedInput)
         {
             _numScheduleMutationWithoutNewSaved = 0;

@@ -109,10 +109,10 @@ namespace PChecker.SystematicTesting.Strategies.Special
             SuffixStrategy.Reset();
         }
 
-        public void SetNFA(Nfa nfa)
+        public void SetNFA(NfaMatcher nfaMatcher)
         {
-            PrefixStrategy.SetNFA(nfa);
-            SuffixStrategy.SetNFA(nfa);
+            PrefixStrategy.SetNFA(nfaMatcher);
+            SuffixStrategy.SetNFA(nfaMatcher);
         }
     }
 }

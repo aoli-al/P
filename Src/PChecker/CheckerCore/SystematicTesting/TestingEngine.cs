@@ -63,6 +63,8 @@ namespace PChecker.SystematicTesting
         /// </summary>
         internal readonly ISchedulingStrategy Strategy;
 
+        private EventPatternObserver _eventPatternObserver;
+
         /// <summary>
         /// Random value generator used by the scheduling strategies.
         /// </summary>
@@ -261,14 +263,6 @@ namespace PChecker.SystematicTesting
                 Strategy = new FeedbackGuidedStrategy<RandomInputGenerator, RandomScheduleGenerator>(
                     _checkerConfiguration, new RandomInputGenerator(checkerConfiguration), new RandomScheduleGenerator(checkerConfiguration));
             }
-            else if (checkerConfiguration.SchedulingStrategy is "pattern")
-            {
-                // Strategy = new UnbiasedSchedulingQLearning(checkerConfiguration.MaxUnfairSchedulingSteps, RandomValueGenerator);
-                // Strategy = new UnbiasedSchedulingQLearning(
-                //     _checkerConfiguration, new RandomInputGenerator(checkerConfiguration), new RandomScheduleGenerator(checkerConfiguration));
-                Strategy = new UnbiasedSchedulingStrategy<RandomInputGenerator, RandomScheduleGenerator>(
-                    _checkerConfiguration, new RandomInputGenerator(checkerConfiguration), new RandomScheduleGenerator(checkerConfiguration));
-            }
             else if (checkerConfiguration.SchedulingStrategy is "2stagefeedback")
             {
                 Strategy = new TwoStageFeedbackStrategy<RandomInputGenerator, RandomScheduleGenerator>(_checkerConfiguration, new RandomInputGenerator(checkerConfiguration), new RandomScheduleGenerator(checkerConfiguration));
@@ -383,9 +377,22 @@ namespace PChecker.SystematicTesting
 
                     BaseNode node;
 
-                    var parser = new EventLangParser(new CommonTokenStream(new EventLangLexer(new AntlrInputStream(_checkerConfiguration.Pattern))));
-                    var visitor = new EventLangVisitor();
-                    node = visitor.Visit(parser.exp());
+                    if (_checkerConfiguration.Pattern.Length > 0)
+                    {
+                        var parser = new EventLangParser(new CommonTokenStream(new EventLangLexer(new AntlrInputStream(_checkerConfiguration.Pattern))));
+                        var visitor = new EventLangVisitor();
+                        node = visitor.Visit(parser.exp());
+                        var nfa = NfaMatcher.TreeToNFA(node);
+                        _eventPatternObserver = new EventPatternObserver(nfa);
+                        if (_checkerConfiguration.UnbiasedSampling)
+                        {
+                            Strategy.SetNFA(nfa);
+                        }
+                    }
+                    else
+                    {
+                        _eventPatternObserver = new EventPatternObserver(new WildcardMatcher());
+                    }
 
 
                     var maxIterations = IsReplayModeEnabled ? 1 : _checkerConfiguration.TestingIterations;
@@ -397,13 +404,8 @@ namespace PChecker.SystematicTesting
                             break;
                         }
 
-                        var nfa = Nfa.TreeToNFA(node);
-                        if (_checkerConfiguration.UnbiasedSampling)
-                        {
-                            Strategy.SetNFA(nfa);
-                        }
                         // Runs a new testing iteration.
-                        RunNextIteration(i, nfa);
+                        RunNextIteration(i);
 
                         if (IsReplayModeEnabled || (!_checkerConfiguration.PerformFullExploration &&
                                                     TestReport.NumOfFoundBugs > 0) || !Strategy.PrepareForNextIteration())
@@ -455,7 +457,7 @@ namespace PChecker.SystematicTesting
         /// <summary>
         /// Runs the next testing iteration.
         /// </summary>
-        private void RunNextIteration(int iteration, Nfa nfa)
+        private void RunNextIteration(int iteration)
         {
             if (!IsReplayModeEnabled && ShouldPrintIteration(iteration + 1))
             {
@@ -481,8 +483,8 @@ namespace PChecker.SystematicTesting
             try
             {
                 // Creates a new instance of the controlled runtime.
-                runtime = new ControlledRuntime(_checkerConfiguration, Strategy, RandomValueGenerator, nfa);
-                // runtime.LogWriter.RegisterLog();
+                runtime = new ControlledRuntime(_checkerConfiguration, Strategy, RandomValueGenerator);
+                runtime.RegisterLog(_eventPatternObserver);
 
                 // If verbosity is turned off, then intercept the program log, and also redirect
                 // the standard output and error streams to a nul logger.
@@ -513,7 +515,7 @@ namespace PChecker.SystematicTesting
 
                 if (Strategy is IFeedbackGuidedStrategy strategy)
                 {
-                    strategy.ObserveRunningResults(runtime);
+                    strategy.ObserveRunningResults(_eventPatternObserver, runtime);
                 }
 
                 // Checks that no monitor is in a hot state at termination. Only
@@ -557,8 +559,7 @@ namespace PChecker.SystematicTesting
                 {
                     Logger.WriteLine($"..... Iter: {iteration}, covered event states: {TestReport.CoverageInfo.EventInfo.ExploredNumState()}, " +
                                      $"covered event seqs: {TestReport.EventSeqStates.Count}, " +
-                                     $"valid schedules: {TestReport.ValidScheduling}, " +
-                                     $"matched: {runtime.EventPatternObserver.IsMatched()}");
+                                     $"valid schedules: {TestReport.ValidScheduling}");
                     if (Strategy is IFeedbackGuidedStrategy s)
                     {
                         Logger.WriteLine($"..... Current input: {s.CurrentInputIndex()}, total saved: {s.TotalSavedInputs()}");
@@ -566,7 +567,7 @@ namespace PChecker.SystematicTesting
                         Logger.WriteLine($"..... Last saved: {string.Join(',', s.GetLastSavedScheduling())}");
                     }
                 }
-                Logger.WriteLine($"..... Last scheduling: {string.Join(',', runtime.EventPatternObserver.SavedEventTypes)}");
+                Logger.WriteLine($"..... Last scheduling: {string.Join(',', _eventPatternObserver.SavedEventTypes)}");
 
                 if (!IsReplayModeEnabled && _checkerConfiguration.PerformFullExploration && runtime.Scheduler.BugFound)
                 {
@@ -578,6 +579,7 @@ namespace PChecker.SystematicTesting
                 // Cleans up the runtime before the next iteration starts.
                 runtimeLogger?.Dispose();
                 runtime?.Dispose();
+                _eventPatternObserver?.Reset();
             }
         }
 
@@ -815,7 +817,7 @@ namespace PChecker.SystematicTesting
             }
 
             // TestReport.TimelineStates.Add(runtime.TimeLineObserver.GetCurrentTimeline());
-            if (runtime.EventPatternObserver.IsMatched())
+            if (_eventPatternObserver.IsMatched())
             {
                 var coverageInfo = runtime.GetCoverageInfo();
                 report.CoverageInfo.Merge(coverageInfo);

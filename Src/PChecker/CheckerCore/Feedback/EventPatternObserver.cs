@@ -1,35 +1,23 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.Serialization.Json;
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Nodes;
-using System.Text.RegularExpressions;
 using PChecker.Actors;
 using PChecker.Actors.Events;
 using PChecker.Actors.Logging;
 using PChecker.Actors.Timers;
 using PChecker.Feedback.EventMatcher;
-using PChecker.SystematicTesting;
 
 namespace PChecker.Feedback;
 
 internal class EventPatternObserver: IActorRuntimeLog
 {
-    private LinkedList<string> _eventQueue = new();
-    private HashSet<string> _interestingEvents = new() { "eBlockWorkItem" };
-    public readonly Nfa Matcher;
+    public readonly IMatcher Matcher;
     private bool _matched = false;
-    private ControlledRuntime _runtime;
     public List<string> SavedEventTypes = new();
 
-    public EventPatternObserver(Nfa matcher, ControlledRuntime runtime)
+    public EventPatternObserver(IMatcher matcher)
     {
         Matcher = matcher;
-        _runtime = runtime;
     }
 
     public void OnCreateActor(ActorId id, string creatorName, string creatorType)
@@ -237,8 +225,15 @@ internal class EventPatternObserver: IActorRuntimeLog
     {
     }
 
-    public bool IsMatched()
+    public virtual bool IsMatched()
     {
         return _matched;
+    }
+
+    public void Reset()
+    {
+        _matched = false;
+        SavedEventTypes = new();
+        Matcher.Reset();
     }
 }
