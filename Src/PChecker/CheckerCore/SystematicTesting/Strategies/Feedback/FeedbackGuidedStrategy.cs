@@ -139,7 +139,7 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
             if (patternObserver.IsMatched())
             {
                 int prevSize = _visitedEventSeqs.Count;
-                _visitedEventSeqs.UnionWith(runtime.EventSeqObserver.SavedEvents);
+                _visitedEventSeqs.Add(runtime.EventSeqObserver.GetTimelineHash());
                 bool updated = _visitedEvents.Merge(runtime.GetCoverageInfo().EventInfo) ||
                                prevSize != _visitedEventSeqs.Count;
                 if (updated)

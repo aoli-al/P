@@ -558,7 +558,7 @@ namespace PChecker.SystematicTesting
                 if (iteration % 10 == 0)
                 {
                     Logger.WriteLine($"..... Iter: {iteration}, covered event states: {TestReport.CoverageInfo.EventInfo.ExploredNumState()}, " +
-                                     $"covered event seqs: {TestReport.EventSeqStates.Count}, " +
+                                     $"covered event seqs: {TestReport.ExploredTimelines.Count}, " +
                                      $"valid schedules: {TestReport.ValidScheduling}");
                     if (Strategy is IFeedbackGuidedStrategy s)
                     {
@@ -822,7 +822,7 @@ namespace PChecker.SystematicTesting
                 var coverageInfo = runtime.GetCoverageInfo();
                 report.CoverageInfo.Merge(coverageInfo);
                 TestReport.Merge(report);
-                TestReport.EventSeqStates.UnionWith(runtime.EventSeqObserver.SavedEvents);
+                TestReport.ExploredTimelines.Add(runtime.EventSeqObserver.GetTimelineHash());
                 TestReport.ValidScheduling += 1;
                 // Also save the graph snapshot of the last iteration, if there is one.
                 Graph = coverageInfo.CoverageGraph;

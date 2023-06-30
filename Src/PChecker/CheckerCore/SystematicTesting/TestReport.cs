@@ -104,7 +104,7 @@ namespace PChecker.SystematicTesting
         public HashSet<int> TimelineStates = new();
 
         [DataMember]
-        public HashSet<int> EventSeqStates = new();
+        public HashSet<int> ExploredTimelines = new();
 
         public int ValidScheduling = 0;
 
