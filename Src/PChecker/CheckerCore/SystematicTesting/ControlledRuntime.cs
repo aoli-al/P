@@ -70,7 +70,6 @@ namespace PChecker.SystematicTesting
         /// </summary>
         internal readonly int? RootTaskId;
 
-        internal readonly EventTimeLineObserver TimeLineObserver = new();
         internal readonly TimelineObserver TimelineObserver = new();
 
         
@@ -156,7 +155,6 @@ namespace PChecker.SystematicTesting
             // Update the current asynchronous control flow with this runtime instance,
             // allowing future retrieval in the same asynchronous call stack.
             AssignAsyncControlFlowRuntime(this);
-            RegisterLog(TimeLineObserver);
             RegisterLog(TimelineObserver);
         }
 

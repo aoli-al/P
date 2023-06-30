@@ -66,10 +66,10 @@ public class TimelineObserver: IActorRuntimeLog
         {
             var tl = kv.Value.Select(it => $"<{it.Item1},{it.Item2}>").ToList();
             tl.Sort();
-            return  kv.Key + string.Join(",", tl);
+            return  kv.Key + ":" + string.Join(",", tl);
         }).ToList();
         timelines.Sort();
-        return string.Join(",", timelines).GetHashCode();
+        return string.Join(";", timelines).GetHashCode();
     }
     public void OnReceiveEvent(ActorId id, string stateName, Event e, bool wasBlocked)
     {

@@ -138,16 +138,17 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
             _matched |= patternObserver.IsMatched();
             if (patternObserver.IsMatched())
             {
-                int prevSize = _visitedEventSeqs.Count;
-                _visitedEventSeqs.Add(runtime.TimelineObserver.GetTimelineHash());
-                bool updated = _visitedEvents.Merge(runtime.GetCoverageInfo().EventInfo) ||
-                               prevSize != _visitedEventSeqs.Count;
-                if (updated)
+                if (_visitedEventSeqs.Add(runtime.TimelineObserver.GetTimelineHash()))
                 {
                     LastSavedSchedule = new(patternObserver.SavedEventTypes);
                     SavedGenerators.Add(Generator);
                     _numMutationsWithoutNewSaved = 0;
                 }
+                // bool updated = _visitedEvents.Merge(runtime.GetCoverageInfo().EventInfo) ||
+                //                prevSize != _visitedEventSeqs.Count;
+                // if (updated)
+                // {
+                // }
             }
         }
         else
