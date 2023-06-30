@@ -71,7 +71,7 @@ namespace PChecker.SystematicTesting
         internal readonly int? RootTaskId;
 
         internal readonly EventTimeLineObserver TimeLineObserver = new();
-        internal readonly EventSeqObserver EventSeqObserver = new();
+        internal readonly TimelineObserver TimelineObserver = new();
 
         
         /// <summary>
@@ -157,7 +157,7 @@ namespace PChecker.SystematicTesting
             // allowing future retrieval in the same asynchronous call stack.
             AssignAsyncControlFlowRuntime(this);
             RegisterLog(TimeLineObserver);
-            RegisterLog(EventSeqObserver);
+            RegisterLog(TimelineObserver);
         }
 
         /// <inheritdoc/>

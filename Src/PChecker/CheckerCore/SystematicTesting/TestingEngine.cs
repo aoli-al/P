@@ -822,7 +822,7 @@ namespace PChecker.SystematicTesting
                 var coverageInfo = runtime.GetCoverageInfo();
                 report.CoverageInfo.Merge(coverageInfo);
                 TestReport.Merge(report);
-                TestReport.ExploredTimelines.Add(runtime.EventSeqObserver.GetTimelineHash());
+                TestReport.ExploredTimelines.Add(runtime.TimelineObserver.GetTimelineHash());
                 TestReport.ValidScheduling += 1;
                 // Also save the graph snapshot of the last iteration, if there is one.
                 Graph = coverageInfo.CoverageGraph;

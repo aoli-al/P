@@ -8,12 +8,11 @@ using PChecker.Actors.Timers;
 
 namespace PChecker.Feedback;
 
-public class EventSeqObserver: IActorRuntimeLog
+public class TimelineObserver: IActorRuntimeLog
 {
 
-    private HashSet<Tuple<string, string>> _timelines = new();
-    private HashSet<string> _allEvents = new();
-    private int _eventSize = 3;
+    private Dictionary<string, HashSet<Tuple<string, string>>> _timelines = new();
+    private Dictionary<string, HashSet<string>> _allEvents = new();
 
 
     public void OnCreateActor(ActorId id, string creatorName, string creatorType)
@@ -47,18 +46,28 @@ public class EventSeqObserver: IActorRuntimeLog
 
     public void OnDequeueEvent(ActorId id, string stateName, Event e)
     {
+        string actor = id.Type;
+
+        _allEvents.TryAdd(actor, new());
+        _timelines.TryAdd(actor, new());
+
         string name = e.GetType().Name;
-        foreach (var ev in _allEvents)
+        foreach (var ev in _allEvents[actor])
         {
-            _timelines.Add(new Tuple<string, string>(ev, name));
+            _timelines[actor].Add(new Tuple<string, string>(ev, name));
         }
 
-        _allEvents.Add(name);
+        _allEvents[actor].Add(name);
     }
 
     public int GetTimelineHash()
     {
-        var timelines = _timelines.Select(it => $"<{it.Item1},{it.Item2}>").ToList();
+        var timelines = _timelines.Select(kv =>
+        {
+            var tl = kv.Value.Select(it => $"<{it.Item1},{it.Item2}>").ToList();
+            tl.Sort();
+            return  kv.Key + string.Join(",", tl);
+        }).ToList();
         timelines.Sort();
         return string.Join(",", timelines).GetHashCode();
     }
