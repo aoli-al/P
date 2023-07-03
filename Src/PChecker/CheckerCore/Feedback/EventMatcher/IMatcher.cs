@@ -9,4 +9,6 @@ public interface IMatcher
     public void Reset();
 
     public HashSet<int> GetVisitedStates();
+
+    public bool IsInterestingEvent(Event e);
 }

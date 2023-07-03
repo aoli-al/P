@@ -462,10 +462,7 @@ internal class NfaMatcher: IMatcher
                         {
                             if (act.LastEvent != null)
                             {
-                                if (InterestingEvents.Contains(act.LastEvent.GetType().Name))
-                                {
-                                    return false;
-                                }
+                                return !IsInterestingEvent(act.LastEvent);
                             }
                         }
                     }
@@ -485,5 +482,10 @@ internal class NfaMatcher: IMatcher
             }
         ).ToList();
 
+    }
+
+    public bool IsInterestingEvent(Event e)
+    {
+        return InterestingEvents.Contains(e.GetType().Name);
     }
 }

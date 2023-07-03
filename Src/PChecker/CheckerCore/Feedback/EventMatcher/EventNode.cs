@@ -64,6 +64,10 @@ public class EventNode : BaseNode
         var method = e.GetType().GetMethod("get_Payload");
         var payload = method.Invoke(e, new object[] { });
 
+        if (payload == null)
+        {
+            return new();
+        }
 
         var fieldNames = payload.GetType().GetField("fieldNames");
         var names = new List<string>();

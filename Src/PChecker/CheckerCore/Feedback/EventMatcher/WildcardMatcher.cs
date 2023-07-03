@@ -18,4 +18,9 @@ internal class WildcardMatcher :  IMatcher
     {
         return new HashSet<int>();
     }
+
+    public bool IsInterestingEvent(Event e)
+    {
+        return true;
+    }
 }
