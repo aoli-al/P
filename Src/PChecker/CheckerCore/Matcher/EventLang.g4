@@ -1,6 +1,5 @@
 grammar EventLang;
 
-
 exp : event              # EventObj
 	| ANY                # AnyExpr
 	| '(' exp ')'        # GroupExpr

@@ -256,7 +256,8 @@ namespace Plang.Options
                     checkerConfiguration.ConsiderDepthBoundHitAsBug = true;
                     break;
                 case "pattern":
-                    checkerConfiguration.Pattern = File.ReadAllText((string) option.Value);
+                    // checkerConfiguration.Pattern = File.ReadAllText((string) option.Value);
+                    checkerConfiguration.Pattern = (string) option.Value;
                     break;
                 default:
                     throw new Exception(string.Format("Unhandled parsed argument: '{0}'", option.LongName));

@@ -1,10 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Antlr4.Runtime.Atn;
-using PChecker.Actors.Events;
 
-namespace PChecker.Feedback.EventMatcher;
+namespace PChecker.Matcher;
 
 internal class Dfa
 {

@@ -8,6 +8,7 @@ using PChecker.Coverage;
 using PChecker.Feedback;
 using PChecker.Feedback.EventMatcher;
 using PChecker.Generator;
+using PChecker.Matcher;
 using PChecker.Random;
 using PChecker.SystematicTesting.Operations;
 using AsyncOperation = PChecker.SystematicTesting.Operations.AsyncOperation;
@@ -33,13 +34,11 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
 
     protected readonly List<StrategyGenerator> SavedGenerators = new();
 
-    private readonly int _maxMutationsWithoutNewSaved = 20;
+    private readonly int _maxMutationsWithoutNewSaved = 50;
 
     private int _numMutationsWithoutNewSaved = 0;
 
     private int _currentInputIndex = 0;
-
-    private NfaMatcher? _nfa = null;
 
     private bool _matched = false;
 
@@ -61,8 +60,8 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
     /// <inheritdoc/>
     public virtual bool GetNextOperation(AsyncOperation current, IEnumerable<AsyncOperation> ops, out AsyncOperation next)
     {
-        var enabledOperations = _nfa != null? _nfa.FindHighPriorityOperations(ops) : ops.Where(op => op.Status is AsyncOperationStatus.Enabled).ToList();
-        next = Generator.ScheduleGenerator.NextRandomOperation(enabledOperations, current);
+        // var enabledOperations = _nfa != null? _nfa.FindHighPriorityOperations(ops) : ops.Where(op => op.Status is AsyncOperationStatus.Enabled).ToList();
+        next = Generator.ScheduleGenerator.NextRandomOperation(ops.ToList(), current);
         ScheduledSteps++;
         return next != null;
     }
@@ -130,7 +129,7 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
     /// This method observes the results of previous run and prepare for the next run.
     /// </summary>
     /// <param name="runtime">The ControlledRuntime of previous run.</param>
-    public virtual void ObserveRunningResults(EventPatternObserver patternObserver, ControlledRuntime runtime)
+    public virtual void ObserveRunningResults(CfgEventPatternObserver patternObserver, ControlledRuntime runtime)
     {
         // TODO: implement real feedback.
         if (patternObserver.IsMatched() || _matched)
@@ -140,7 +139,7 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
             {
                 if (_visitedEventSeqs.Add(runtime.TimelineObserver.GetTimelineHash()))
                 {
-                    LastSavedSchedule = new(patternObserver.SavedEventTypes);
+                    // LastSavedSchedule = new(patternObserver.SavedEventTypes);
                     SavedGenerators.Add(Generator);
                     _numMutationsWithoutNewSaved = 0;
                 }
@@ -151,18 +150,18 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
                 // }
             }
         }
-        else
-        {
-            int prevStates = _visitedStates.Count;
-            _visitedStates.UnionWith(patternObserver.Matcher.GetVisitedStates());
-            if (_visitedStates.Count != prevStates)
-            {
-                LastSavedSchedule = new(patternObserver.SavedEventTypes);
-                SavedGenerators.Clear();
-                SavedGenerators.Add(Generator);
-                _numMutationsWithoutNewSaved = 0;
-            }
-        }
+        // else
+        // {
+        //     int prevStates = _visitedStates.Count;
+        //     _visitedStates.UnionWith(patternObserver.Matcher.GetVisitedStates());
+        //     if (_visitedStates.Count != prevStates)
+        //     {
+        //         LastSavedSchedule = new(patternObserver.SavedEventTypes);
+        //         SavedGenerators.Clear();
+        //         SavedGenerators.Add(Generator);
+        //         _numMutationsWithoutNewSaved = 0;
+        //     }
+        // }
     }
 
     public int TotalSavedInputs()
@@ -215,10 +214,5 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
     public List<string> GetLastSavedScheduling()
     {
         return LastSavedSchedule;
-    }
-
-    public virtual void SetNFA(NfaMatcher nfaMatcher)
-    {
-        _nfa = nfaMatcher;
     }
 }

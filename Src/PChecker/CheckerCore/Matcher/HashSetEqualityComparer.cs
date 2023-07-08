@@ -1,7 +1,6 @@
-using System;
 using System.Collections.Generic;
 
-namespace PChecker.Feedback.EventMatcher;
+namespace PChecker.Matcher;
 
 public class HashSetEqualityComparer : IEqualityComparer<HashSet<int>>
 {

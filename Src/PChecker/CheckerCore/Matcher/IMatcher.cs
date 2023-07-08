@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using PChecker.Actors.Events;
 
-namespace PChecker.Feedback.EventMatcher;
+namespace PChecker.Matcher;
 
 public interface IMatcher
 {

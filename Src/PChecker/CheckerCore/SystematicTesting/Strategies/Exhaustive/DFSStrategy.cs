@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using PChecker.Feedback.EventMatcher;
 using PChecker.IO.Debugging;
+using PChecker.Matcher;
 using PChecker.SystematicTesting.Operations;
 
 namespace PChecker.SystematicTesting.Strategies.Exhaustive

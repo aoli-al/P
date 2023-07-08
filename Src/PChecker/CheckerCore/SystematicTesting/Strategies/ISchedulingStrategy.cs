@@ -2,7 +2,9 @@
 // Licensed under the MIT License.
 
 using System.Collections.Generic;
+using System.Linq;
 using PChecker.Feedback.EventMatcher;
+using PChecker.Matcher;
 using PChecker.SystematicTesting.Operations;
 
 namespace PChecker.SystematicTesting.Strategies
@@ -74,7 +76,5 @@ namespace PChecker.SystematicTesting.Strategies
         /// </summary>
         void Reset();
 
-
-        public void SetNFA(NfaMatcher nfaMatcher);
     }
 }

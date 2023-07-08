@@ -149,7 +149,7 @@ namespace PChecker.SystematicTesting
             }
 
             // Get and order the operations by their id.
-            var ops = OperationMap.Values.OrderBy(op => op.Id);
+            var ops = OperationMap.Values.OrderBy(op => op.Id).ToList();
 
             // Try enable any operation that is currently waiting, but has its dependencies already satisfied.
             foreach (var op in ops)
@@ -159,6 +159,11 @@ namespace PChecker.SystematicTesting
                     machineOp.TryEnable();
                     Debug.WriteLine("<ScheduleDebug> Operation '{0}' has status '{1}'.", op.Id, op.Status);
                 }
+            }
+
+            if (CheckerConfiguration.UnbiasedSampling)
+            {
+                ops = Utils.FindHighPriorityOperations(ops, CheckerConfiguration.InterestingEvents);
             }
 
             if (!Strategy.GetNextOperation(current, ops, out var next))

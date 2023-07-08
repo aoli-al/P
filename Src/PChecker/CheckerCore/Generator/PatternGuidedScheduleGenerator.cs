@@ -4,6 +4,7 @@ using System.Linq;
 using PChecker.Actors.EventQueues;
 using PChecker.Actors.Events;
 using PChecker.Feedback.EventMatcher;
+using PChecker.Matcher;
 using PChecker.SystematicTesting.Operations;
 
 namespace PChecker.Generator;

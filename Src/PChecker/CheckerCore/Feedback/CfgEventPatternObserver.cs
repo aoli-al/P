@@ -5,20 +5,18 @@ using PChecker.Actors;
 using PChecker.Actors.Events;
 using PChecker.Actors.Logging;
 using PChecker.Actors.Timers;
-using PChecker.Feedback.EventMatcher;
 using PChecker.Matcher;
 
 namespace PChecker.Feedback;
 
-internal class EventPatternObserver: IActorRuntimeLog
+internal class CfgEventPatternObserver : IActorRuntimeLog
 {
-    public readonly IMatcher Matcher;
-    private bool _matched = false;
-    public List<string> SavedEventTypes = new();
-
-    public EventPatternObserver(IMatcher matcher)
+    private IMatcher<List<EventObj>> _matcher;
+    private Dictionary<Event, ActorId> _senderMap = new();
+    private List<EventObj> _events = new();
+    public CfgEventPatternObserver(IMatcher<List<EventObj>> matcher)
     {
-        Matcher = matcher;
+        _matcher = matcher;
     }
 
     public void OnCreateActor(ActorId id, string creatorName, string creatorType)
@@ -52,52 +50,7 @@ internal class EventPatternObserver: IActorRuntimeLog
 
     public void OnDequeueEvent(ActorId id, string stateName, Event e)
     {
-        _matched |= Matcher.MatchOne(e);
-        if (e.GetType().Name == "eBlockWorkItem")
-        {
-            var result = GetEventWithPayload(e);
-            SavedEventTypes.Add(result["wType"]);
-        }
-        else if (Matcher.IsInterestingEvent(e))
-        {
-            SavedEventTypes.Add(e.GetType().Name);
-        }
-    }
-
-    private Dictionary<string, string> GetEventWithPayload(Event e)
-    {
-        var method = e.GetType().GetMethod("get_Payload");
-        var payload = method.Invoke(e, new object[] { });
-
-
-        var fieldNames = payload.GetType().GetField("fieldNames");
-        var names = new List<string>();
-        foreach (var item in (IEnumerable) fieldNames.GetValue(payload))
-        {
-            names.Add((string) item);
-        }
-        var fieldValues = payload.GetType().GetField("fieldValues");
-        var values = new List<string>();
-        foreach (var item in (IEnumerable) fieldValues.GetValue(payload))
-        {
-            if (item != null)
-            {
-                values.Add(item.ToString());
-            }
-            else
-            {
-                values.Add("null");
-            }
-        }
-
-        Dictionary<string, string> result = new();
-
-        for (var i = 0; i < names.Count; i++)
-        {
-            result[names[i]] = values[i];
-        }
-
-        return result;
+        _events.Add(new EventObj(e, null, id, _events.Count));
     }
 
 
@@ -227,13 +180,11 @@ internal class EventPatternObserver: IActorRuntimeLog
 
     public virtual bool IsMatched()
     {
-        return _matched;
+        return _matcher.Matches(_events);
     }
 
     public void Reset()
     {
-        _matched = false;
-        SavedEventTypes = new();
-        Matcher.Reset();
+        _events.Clear();
     }
 }

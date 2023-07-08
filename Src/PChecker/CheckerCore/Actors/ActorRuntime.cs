@@ -15,6 +15,8 @@ using PChecker.Actors.Exceptions;
 using PChecker.Actors.Logging;
 using PChecker.Actors.Managers;
 using PChecker.Actors.Timers;
+using PChecker.Feedback;
+using PChecker.Matcher;
 using PChecker.Random;
 using PChecker.Runtime;
 using PChecker.Specifications.Monitors;

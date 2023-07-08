@@ -3,6 +3,7 @@
 
 using System.Collections.Generic;
 using PChecker.Feedback.EventMatcher;
+using PChecker.Matcher;
 using PChecker.SystematicTesting.Operations;
 
 namespace PChecker.SystematicTesting.Strategies.Special
@@ -107,12 +108,6 @@ namespace PChecker.SystematicTesting.Strategies.Special
         {
             PrefixStrategy.Reset();
             SuffixStrategy.Reset();
-        }
-
-        public void SetNFA(NfaMatcher nfaMatcher)
-        {
-            PrefixStrategy.SetNFA(nfaMatcher);
-            SuffixStrategy.SetNFA(nfaMatcher);
         }
     }
 }

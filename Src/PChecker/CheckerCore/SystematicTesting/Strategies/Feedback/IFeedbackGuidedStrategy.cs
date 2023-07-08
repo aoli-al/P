@@ -6,7 +6,7 @@ namespace PChecker.SystematicTesting.Strategies.Feedback;
 
 internal interface IFeedbackGuidedStrategy: ISchedulingStrategy
 {
-    public void ObserveRunningResults(EventPatternObserver patternObserver, ControlledRuntime runtime);
+    public void ObserveRunningResults(CfgEventPatternObserver patternObserver, ControlledRuntime runtime);
     public int TotalSavedInputs();
     public int CurrentInputIndex();
     public HashSet<int> GetAllCoveredStates();

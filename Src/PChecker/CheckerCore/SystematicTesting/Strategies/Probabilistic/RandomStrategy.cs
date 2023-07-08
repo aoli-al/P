@@ -4,6 +4,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using PChecker.Feedback.EventMatcher;
+using PChecker.Matcher;
 using PChecker.Random;
 using PChecker.SystematicTesting.Operations;
 
@@ -29,8 +30,6 @@ namespace PChecker.SystematicTesting.Strategies.Probabilistic
         /// </summary>
         protected int ScheduledSteps;
 
-        private NfaMatcher? _nfa = null;
-
         /// <summary>
         /// Initializes a new instance of the <see cref="RandomStrategy"/> class.
         /// </summary>
@@ -45,13 +44,12 @@ namespace PChecker.SystematicTesting.Strategies.Probabilistic
         public virtual bool GetNextOperation(AsyncOperation current, IEnumerable<AsyncOperation> ops, out AsyncOperation next)
         {
 
-            var enabledOperations = _nfa != null ? _nfa.FindHighPriorityOperations(ops) : ops.Where(
+            var enabledOperations = ops.Where(
                 op =>
                 {
                     return op.Status is AsyncOperationStatus.Enabled;
                 }
             ).ToList();
-
 
 
             if (enabledOperations.Count == 0)
@@ -121,11 +119,6 @@ namespace PChecker.SystematicTesting.Strategies.Probabilistic
         public virtual void Reset()
         {
             ScheduledSteps = 0;
-        }
-
-        public void SetNFA(NfaMatcher nfaMatcher)
-        {
-            _nfa = nfaMatcher;
         }
     }
 }

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using Antlr4.Runtime.Atn;
+using PChecker.Feedback.EventMatcher;
 
-namespace PChecker.Feedback.EventMatcher;
+namespace PChecker.Matcher;
 
 public class EventLangVisitor : EventLangBaseVisitor<BaseNode>
 {

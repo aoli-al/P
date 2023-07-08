@@ -1,10 +1,9 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using PChecker.Actors.Events;
 
-namespace PChecker.Feedback.EventMatcher;
+namespace PChecker.Matcher;
 
 public class EventNode : BaseNode
 {

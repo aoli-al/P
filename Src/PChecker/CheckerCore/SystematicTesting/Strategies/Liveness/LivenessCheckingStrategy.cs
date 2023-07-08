@@ -3,6 +3,7 @@
 
 using System.Collections.Generic;
 using PChecker.Feedback.EventMatcher;
+using PChecker.Matcher;
 using PChecker.Specifications.Monitors;
 using PChecker.SystematicTesting.Operations;
 
@@ -83,11 +84,6 @@ namespace PChecker.SystematicTesting.Strategies.Liveness
         public virtual void Reset()
         {
             SchedulingStrategy.Reset();
-        }
-
-        public void SetNFA(NfaMatcher nfaMatcher)
-        {
-            SchedulingStrategy.SetNFA(nfaMatcher);
         }
     }
 }

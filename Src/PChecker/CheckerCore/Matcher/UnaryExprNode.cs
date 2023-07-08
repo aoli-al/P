@@ -1,4 +1,4 @@
-namespace PChecker.Feedback.EventMatcher;
+namespace PChecker.Matcher;
 
 
 public class UnaryExprNode : BaseNode

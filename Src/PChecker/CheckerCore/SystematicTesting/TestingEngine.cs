@@ -23,6 +23,7 @@ using PChecker.Generator;
 using PChecker.IO;
 using PChecker.IO.Debugging;
 using PChecker.IO.Logging;
+using PChecker.Matcher;
 using PChecker.Random;
 using PChecker.Runtime;
 using PChecker.SystematicTesting.Strategies;
@@ -63,7 +64,7 @@ namespace PChecker.SystematicTesting
         /// </summary>
         internal readonly ISchedulingStrategy Strategy;
 
-        private EventPatternObserver _eventPatternObserver;
+        private CfgEventPatternObserver _eventPatternObserver;
 
         /// <summary>
         /// Random value generator used by the scheduling strategies.
@@ -142,17 +143,28 @@ namespace PChecker.SystematicTesting
         public static TestingEngine Create(CheckerConfiguration checkerConfiguration, Assembly assembly)
         {
             TestMethodInfo testMethodInfo = null;
+            CfgEventPatternObserver eventMatcher = null;
             try
             {
                 testMethodInfo = TestMethodInfo.GetFromAssembly(assembly, checkerConfiguration.TestCaseName);
                 Console.Out.WriteLine($".. Test case :: {testMethodInfo.Name}");
+
+                if (checkerConfiguration.Pattern.Length > 0)
+                {
+                    Type t = assembly.GetType("PImplementation.GlobalFunctions");
+                    var result = ((IMatcher<List<EventObj>>, HashSet<Type>)) t.GetMethod(checkerConfiguration.Pattern,
+                            BindingFlags.Public | BindingFlags.Static)
+                        .Invoke(null, null);
+                    eventMatcher = new CfgEventPatternObserver(result.Item1);
+                    checkerConfiguration.InterestingEvents = result.Item2;
+                }
             }
             catch
             {
                 Error.ReportAndExit($"Failed to get test method '{checkerConfiguration.TestCaseName}' from assembly '{assembly.FullName}'");
             }
 
-            return new TestingEngine(checkerConfiguration, testMethodInfo);
+            return new TestingEngine(checkerConfiguration, testMethodInfo, eventMatcher);
         }
 
         /// <summary>
@@ -199,13 +211,19 @@ namespace PChecker.SystematicTesting
         {
         }
 
+        private TestingEngine(CheckerConfiguration checkerConfiguration, TestMethodInfo testMethodInfo)
+            : this(checkerConfiguration, testMethodInfo, null)
+        {
+        }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="TestingEngine"/> class.
         /// </summary>
-        private TestingEngine(CheckerConfiguration checkerConfiguration, TestMethodInfo testMethodInfo)
+        private TestingEngine(CheckerConfiguration checkerConfiguration, TestMethodInfo testMethodInfo, CfgEventPatternObserver observer)
         {
             _checkerConfiguration = checkerConfiguration;
             TestMethodInfo = testMethodInfo;
+            _eventPatternObserver = observer;
 
             Logger = new ConsoleLogger();
             ErrorReporter = new ErrorReporter(checkerConfiguration, Logger);
@@ -375,25 +393,13 @@ namespace PChecker.SystematicTesting
                     // Where are those patterns from?
                     // Paxos
 
-                    BaseNode node;
 
-                    if (_checkerConfiguration.Pattern.Length > 0)
-                    {
-                        var parser = new EventLangParser(new CommonTokenStream(new EventLangLexer(new AntlrInputStream(_checkerConfiguration.Pattern))));
-                        var visitor = new EventLangVisitor();
-                        node = visitor.Visit(parser.exp());
-                        var nfa = NfaMatcher.TreeToNFA(node);
-                        _eventPatternObserver = new EventPatternObserver(nfa);
-                        if (_checkerConfiguration.UnbiasedSampling)
-                        {
-                            Strategy.SetNFA(nfa);
-                        }
-                    }
-                    else
-                    {
-                        _eventPatternObserver = new EventPatternObserver(new WildcardMatcher());
-                    }
-
+                    // if (_checkerConfiguration.Pattern.Length > 0)
+                    // {
+                    //     Type t = Type.GetType("PImplementation.GlobalFunctions");
+                    //     _eventPatternObserver = new CfgEventPatternObserver((IMatcher<List<EventObj>>) t.GetMethod(_checkerConfiguration.Pattern, BindingFlags.Public | BindingFlags.Static)
+                    //         .Invoke(null, null));
+                    // }
 
                     var maxIterations = IsReplayModeEnabled ? 1 : _checkerConfiguration.TestingIterations;
 
@@ -484,7 +490,10 @@ namespace PChecker.SystematicTesting
             {
                 // Creates a new instance of the controlled runtime.
                 runtime = new ControlledRuntime(_checkerConfiguration, Strategy, RandomValueGenerator);
-                runtime.RegisterLog(_eventPatternObserver);
+                if (_eventPatternObserver != null)
+                {
+                    runtime.RegisterLog(_eventPatternObserver);
+                }
 
                 // If verbosity is turned off, then intercept the program log, and also redirect
                 // the standard output and error streams to a nul logger.
@@ -567,7 +576,6 @@ namespace PChecker.SystematicTesting
                         Logger.WriteLine($"..... Last saved: {string.Join(',', s.GetLastSavedScheduling())}");
                     }
                 }
-                Logger.WriteLine($"..... Last scheduling: {string.Join(',', _eventPatternObserver.SavedEventTypes)}");
 
                 if (!IsReplayModeEnabled && _checkerConfiguration.PerformFullExploration && runtime.Scheduler.BugFound)
                 {

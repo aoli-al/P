@@ -1,13 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Net.Mail;
-using Antlr4.Runtime.Atn;
 using PChecker.Actors.Events;
 using PChecker.SystematicTesting.Operations;
 
-namespace PChecker.Feedback.EventMatcher;
+namespace PChecker.Matcher;
 
 internal class NfaMatcher: IMatcher
 {
@@ -481,11 +478,14 @@ internal class NfaMatcher: IMatcher
                 return op.Status is AsyncOperationStatus.Enabled;
             }
         ).ToList();
-
     }
 
     public bool IsInterestingEvent(Event e)
     {
+        if (InterestingEvents.Contains("."))
+        {
+            return true;
+        }
         return InterestingEvents.Contains(e.GetType().Name);
     }
 }
