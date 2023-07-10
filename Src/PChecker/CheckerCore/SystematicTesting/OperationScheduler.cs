@@ -161,10 +161,7 @@ namespace PChecker.SystematicTesting
                 }
             }
 
-            if (CheckerConfiguration.UnbiasedSampling)
-            {
-                ops = Utils.FindHighPriorityOperations(ops, CheckerConfiguration.InterestingEvents);
-            }
+            ops = Utils.FindHighPriorityOperations(ops, CheckerConfiguration.InterestingEvents);
 
             if (!Strategy.GetNextOperation(current, ops, out var next))
             {

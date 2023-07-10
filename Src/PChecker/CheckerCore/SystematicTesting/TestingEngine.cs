@@ -149,14 +149,20 @@ namespace PChecker.SystematicTesting
                 testMethodInfo = TestMethodInfo.GetFromAssembly(assembly, checkerConfiguration.TestCaseName);
                 Console.Out.WriteLine($".. Test case :: {testMethodInfo.Name}");
 
+                Type t = assembly.GetType("PImplementation.GlobalFunctions");
                 if (checkerConfiguration.Pattern.Length > 0)
                 {
-                    Type t = assembly.GetType("PImplementation.GlobalFunctions");
-                    var result = ((IMatcher<List<EventObj>>, HashSet<Type>)) t.GetMethod(checkerConfiguration.Pattern,
+                    var result = (IMatcher<List<EventObj>>) t.GetMethod(checkerConfiguration.Pattern,
                             BindingFlags.Public | BindingFlags.Static)
                         .Invoke(null, null);
-                    eventMatcher = new CfgEventPatternObserver(result.Item1);
-                    checkerConfiguration.InterestingEvents = result.Item2;
+                    eventMatcher = new CfgEventPatternObserver(result);
+                }
+                if (checkerConfiguration.UnbiasedSampling)
+                {
+                    var result = (HashSet<Type>) t.GetMethod("GetInterestingEvents",
+                            BindingFlags.Public | BindingFlags.Static)
+                        .Invoke(null, null);
+                    checkerConfiguration.InterestingEvents = result;
                 }
             }
             catch
