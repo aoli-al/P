@@ -255,7 +255,7 @@ namespace PChecker
         public bool DisableEnvironmentExit;
 
 
-        public HashSet<Type> InterestingEvents;
+        public HashSet<Type> InterestingEvents = new();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="CheckerConfiguration"/> class.
