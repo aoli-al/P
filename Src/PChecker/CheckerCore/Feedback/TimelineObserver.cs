@@ -62,6 +62,11 @@ public class TimelineObserver: IActorRuntimeLog
 
     public int GetTimelineHash()
     {
+        return GetTimeline().GetHashCode();
+    }
+
+    public string GetTimeline()
+    {
         var timelines = _timelines.Select(kv =>
         {
             var tl = kv.Value.Select(it => $"<{it.Item1},{it.Item2}>").ToList();
@@ -69,8 +74,9 @@ public class TimelineObserver: IActorRuntimeLog
             return  kv.Key + ":" + string.Join(",", tl);
         }).ToList();
         timelines.Sort();
-        return string.Join(";", timelines).GetHashCode();
+        return string.Join(";", timelines);
     }
+
     public void OnReceiveEvent(ActorId id, string stateName, Event e, bool wasBlocked)
     {
 

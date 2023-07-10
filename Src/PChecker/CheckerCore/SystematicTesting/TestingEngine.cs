@@ -836,7 +836,14 @@ namespace PChecker.SystematicTesting
                 var coverageInfo = runtime.GetCoverageInfo();
                 report.CoverageInfo.Merge(coverageInfo);
                 TestReport.Merge(report);
-                TestReport.ExploredTimelines.Add(runtime.TimelineObserver.GetTimelineHash());
+
+                if (TestReport.ExploredTimelines.Add(runtime.TimelineObserver.GetTimelineHash()))
+                {
+                    if (_checkerConfiguration.IsVerbose)
+                    {
+                        Logger.WriteLine($"... New timeline observed: {runtime.TimelineObserver.GetTimeline()}");
+                    }
+                }
                 TestReport.ValidScheduling += 1;
                 // Also save the graph snapshot of the last iteration, if there is one.
                 Graph = coverageInfo.CoverageGraph;
