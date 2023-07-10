@@ -831,7 +831,7 @@ namespace PChecker.SystematicTesting
             }
 
             // TestReport.TimelineStates.Add(runtime.TimeLineObserver.GetCurrentTimeline());
-            if (_eventPatternObserver.IsMatched())
+            if (_eventPatternObserver == null || _eventPatternObserver.IsMatched())
             {
                 var coverageInfo = runtime.GetCoverageInfo();
                 report.CoverageInfo.Merge(coverageInfo);
