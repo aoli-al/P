@@ -132,9 +132,8 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
     public virtual void ObserveRunningResults(CfgEventPatternObserver patternObserver, ControlledRuntime runtime)
     {
         // TODO: implement real feedback.
-        if (patternObserver == null || patternObserver.IsMatched() || _matched)
+        if (patternObserver == null || patternObserver.IsMatched())
         {
-            _matched = true;
             if (_visitedEventSeqs.Add(runtime.TimelineObserver.GetTimelineHash()))
             {
                 // LastSavedSchedule = new(patternObserver.SavedEventTypes);
