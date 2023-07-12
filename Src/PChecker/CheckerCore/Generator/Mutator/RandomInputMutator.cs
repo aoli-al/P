@@ -6,8 +6,8 @@ namespace PChecker.Generator.Mutator;
 
 public class RandomInputMutator : IMutator<RandomInputGenerator>
 {
-    private readonly int _meanMutationCount = 32;
-    private readonly int _meanMutationSize = 128;
+    private readonly int _meanMutationCount = 10;
+    private readonly int _meanMutationSize = 10;
     private System.Random _random = new();
     public RandomInputGenerator Mutate(RandomInputGenerator prev)
     {
