@@ -12,7 +12,7 @@ namespace PChecker.Feedback;
 internal class CfgEventPatternObserver : IActorRuntimeLog
 {
     private IMatcher<List<EventObj>> _matcher;
-    private Dictionary<Event, ActorId> _senderMap = new();
+    private Dictionary<Event, string?> _senderMap = new();
     private List<EventObj> _events = new();
     public CfgEventPatternObserver(IMatcher<List<EventObj>> matcher)
     {
@@ -36,6 +36,7 @@ internal class CfgEventPatternObserver : IActorRuntimeLog
     public void OnSendEvent(ActorId targetActorId, string senderName, string senderType, string senderStateName, Event e,
         Guid opGroupId, bool isTargetHalted)
     {
+        _senderMap[e] = senderName;
     }
 
     public void OnRaiseEvent(ActorId id, string stateName, Event e)
@@ -50,7 +51,7 @@ internal class CfgEventPatternObserver : IActorRuntimeLog
 
     public void OnDequeueEvent(ActorId id, string stateName, Event e)
     {
-        _events.Add(new EventObj(e, null, id, _events.Count));
+        _events.Add(new EventObj(e, _senderMap.GetValueOrDefault(e), id.Name, _events.Count));
     }
 
 
@@ -141,7 +142,7 @@ internal class CfgEventPatternObserver : IActorRuntimeLog
     public void OnMonitorProcessEvent(string monitorType, string stateName, string senderName, string senderType,
         string senderStateName, Event e)
     {
-
+        _events.Add(new EventObj(e, senderName, null, _events.Count));
     }
 
     public void OnMonitorRaiseEvent(string monitorType, string stateName, Event e)

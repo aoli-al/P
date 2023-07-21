@@ -6,11 +6,11 @@ namespace PChecker.Matcher;
 public class EventObj
 {
     public Event Event;
-    public ActorId Sender;
-    public ActorId Receiver;
+    public string? Sender;
+    public string? Receiver;
     public int Index;
 
-    public EventObj(Event e, ActorId sender, ActorId receiver, int index)
+    public EventObj(Event e, string? sender, string? receiver, int index)
     {
         Event = e;
         Sender = sender;
