@@ -589,6 +589,10 @@ namespace PChecker.SystematicTesting
                 }
 
                 // Cleans up the runtime before the next iteration starts.
+                if (_eventPatternObserver != null)
+                {
+                    runtime.RemoveLog(_eventPatternObserver);
+                }
                 runtimeLogger?.Dispose();
                 runtime?.Dispose();
                 _eventPatternObserver?.Reset();

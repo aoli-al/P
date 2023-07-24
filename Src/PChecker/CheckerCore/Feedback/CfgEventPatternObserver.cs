@@ -187,5 +187,6 @@ internal class CfgEventPatternObserver : IActorRuntimeLog
     public void Reset()
     {
         _events.Clear();
+        _senderMap.Clear();
     }
 }
