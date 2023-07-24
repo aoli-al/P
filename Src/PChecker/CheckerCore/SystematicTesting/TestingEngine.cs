@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data.SqlTypes;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -34,6 +35,7 @@ using PChecker.SystematicTesting.Strategies.Special;
 using PChecker.SystematicTesting.Traces;
 using PChecker.Utilities;
 using CoyoteTasks = PChecker.Tasks;
+using Debug = PChecker.IO.Debugging.Debug;
 
 namespace PChecker.SystematicTesting
 {
@@ -136,6 +138,8 @@ namespace PChecker.SystematicTesting
         /// </summary>
         public static TestingEngine Create(CheckerConfiguration checkerConfiguration) =>
             Create(checkerConfiguration, LoadAssembly(checkerConfiguration.AssemblyToBeAnalyzed));
+        
+        private Stopwatch watch;
 
         /// <summary>
         /// Creates a new systematic testing engine.
@@ -392,21 +396,14 @@ namespace PChecker.SystematicTesting
             {
                 try
                 {
+                    
                     // Invokes the user-specified initialization method.
                     TestMethodInfo.InitializeAllIterations();
                     // Add bounds
                     // Notion of sender
                     // Where are those patterns from?
                     // Paxos
-
-
-                    // if (_checkerConfiguration.Pattern.Length > 0)
-                    // {
-                    //     Type t = Type.GetType("PImplementation.GlobalFunctions");
-                    //     _eventPatternObserver = new CfgEventPatternObserver((IMatcher<List<EventObj>>) t.GetMethod(_checkerConfiguration.Pattern, BindingFlags.Public | BindingFlags.Static)
-                    //         .Invoke(null, null));
-                    // }
-
+                    watch = Stopwatch.StartNew();
                     var maxIterations = IsReplayModeEnabled ? 1 : _checkerConfiguration.TestingIterations;
 
                     for (var i = 0; i < maxIterations; i++)
@@ -572,7 +569,8 @@ namespace PChecker.SystematicTesting
 
                 if (iteration % 10 == 0)
                 {
-                    Logger.WriteLine($"..... Iter: {iteration}, covered event states: {TestReport.CoverageInfo.EventInfo.ExploredNumState()}, " +
+                    var seconds = watch.Elapsed.TotalSeconds;
+                    Logger.WriteLine($"..... Iter: {iteration}, elapsed: {seconds}, covered event states: {TestReport.CoverageInfo.EventInfo.ExploredNumState()}, " +
                                      $"covered event seqs: {TestReport.ExploredTimelines.Count}, " +
                                      $"valid schedules: {TestReport.ValidScheduling}");
                     if (Strategy is IFeedbackGuidedStrategy s)
