@@ -47,16 +47,16 @@ public class TimelineObserver: IActorRuntimeLog
     public void OnDequeueEvent(ActorId id, string stateName, Event e)
     {
         string actor = id.Type;
-
+        
         _allEvents.TryAdd(actor, new());
         _timelines.TryAdd(actor, new());
-
+        
         string name = e.GetType().Name;
         foreach (var ev in _allEvents[actor])
         {
             _timelines[actor].Add(new Tuple<string, string>(ev, name));
         }
-
+        
         _allEvents[actor].Add(name);
     }
 
