@@ -27,7 +27,7 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
     private readonly int _maxScheduledSteps;
 
     protected int ScheduledSteps;
-    private HashSet<int> _visitedStates = new();
+    private int _visitedStates = 0;
 
     private readonly EventCoverage _visitedEvents = new();
     private readonly HashSet<int> _visitedEventSeqs = new();
@@ -163,8 +163,9 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
                     SavedGenerators.Add(Generator);
                     _numMutationsWithoutNewSaved = 0;
                 }
-                else if (_visitedStates.Add(state))
+                else if ((_visitedStates | state) != _visitedStates)
                 {
+                    _visitedStates |= state;
                     SavedGenerators.Add(Generator);
                     _numMutationsWithoutNewSaved = 0;
                 }
@@ -214,7 +215,7 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
         return new StrategyGenerator(Generator.InputGenerator.Mutate(), Generator.ScheduleGenerator.Mutate());
     }
 
-    public HashSet<int> GetAllCoveredStates()
+    public int GetAllCoveredStates()
     {
         return _visitedStates;
     }

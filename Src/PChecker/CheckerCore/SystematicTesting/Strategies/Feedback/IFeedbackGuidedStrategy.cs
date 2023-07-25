@@ -9,6 +9,6 @@ internal interface IFeedbackGuidedStrategy: ISchedulingStrategy
     public void ObserveRunningResults(CfgEventPatternObserver patternObserver, ControlledRuntime runtime);
     public int TotalSavedInputs();
     public int CurrentInputIndex();
-    public HashSet<int> GetAllCoveredStates();
+    public int GetAllCoveredStates();
     public List<string> GetLastSavedScheduling();
 }

@@ -576,7 +576,7 @@ namespace PChecker.SystematicTesting
                     if (Strategy is IFeedbackGuidedStrategy s)
                     {
                         Logger.WriteLine($"..... Current input: {s.CurrentInputIndex()}, total saved: {s.TotalSavedInputs()}");
-                        Logger.WriteLine($"..... Covered states: {string.Join(',', s.GetAllCoveredStates())}");
+                        Logger.WriteLine($"..... Covered states: {s.GetAllCoveredStates()}");
                         Logger.WriteLine($"..... Last saved: {string.Join(',', s.GetLastSavedScheduling())}");
                     }
                 }
