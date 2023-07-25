@@ -132,32 +132,41 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
     public virtual void ObserveRunningResults(CfgEventPatternObserver patternObserver, ControlledRuntime runtime)
     {
         // TODO: implement real feedback.
-        if (patternObserver == null || patternObserver.IsMatched())
+        if (patternObserver == null)
         {
             if (_visitedEventSeqs.Add(runtime.TimelineObserver.GetTimelineHash()))
             {
-                // LastSavedSchedule = new(patternObserver.SavedEventTypes);
                 SavedGenerators.Add(Generator);
                 _numMutationsWithoutNewSaved = 0;
             }
-            // bool updated = _visitedEvents.Merge(runtime.GetCoverageInfo().EventInfo) ||
-            //                prevSize != _visitedEventSeqs.Count;
-            // if (updated)
-            // {
-            // }
         }
-        // else
-        // {
-        //     int prevStates = _visitedStates.Count;
-        //     _visitedStates.UnionWith(patternObserver.Matcher.GetVisitedStates());
-        //     if (_visitedStates.Count != prevStates)
-        //     {
-        //         LastSavedSchedule = new(patternObserver.SavedEventTypes);
-        //         SavedGenerators.Clear();
-        //         SavedGenerators.Add(Generator);
-        //         _numMutationsWithoutNewSaved = 0;
-        //     }
-        // }
+        else
+        {
+            int state = patternObserver.ShouldSave();
+            if (_matched)
+            {
+                if (state == -1)
+                {
+                    SavedGenerators.Add(Generator);
+                    _numMutationsWithoutNewSaved = 0;
+                }
+            }
+            else
+            {
+                if (state == -1)
+                {
+                    _matched = true;
+                    SavedGenerators.Clear();
+                    SavedGenerators.Add(Generator);
+                    _numMutationsWithoutNewSaved = 0;
+                }
+                else if (_visitedStates.Add(state))
+                {
+                    SavedGenerators.Add(Generator);
+                    _numMutationsWithoutNewSaved = 0;
+                }
+            }
+        }
     }
 
     public int TotalSavedInputs()

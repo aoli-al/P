@@ -68,4 +68,15 @@ public abstract class PairMatcher : IJunction<Tuple<EventObj, EventObj>>
 
 public abstract class EventSeqMatcher : IJunction<List<EventObj>>
 {
+    public override bool Matches(List<EventObj> e)
+    {
+        return true;
+    }
+
+    public virtual int IsMatched(List<EventObj> e)
+    {
+        return 0;
+    }
+
+
 }

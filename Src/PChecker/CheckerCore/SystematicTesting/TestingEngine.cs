@@ -156,7 +156,7 @@ namespace PChecker.SystematicTesting
                 Type t = assembly.GetType("PImplementation.GlobalFunctions");
                 if (checkerConfiguration.Pattern.Length > 0)
                 {
-                    var result = (IMatcher<List<EventObj>>) t.GetMethod(checkerConfiguration.Pattern,
+                    var result = (EventSeqMatcher) t.GetMethod(checkerConfiguration.Pattern,
                             BindingFlags.Public | BindingFlags.Static)
                         .Invoke(null, null);
                     eventMatcher = new CfgEventPatternObserver(result);

@@ -11,10 +11,11 @@ namespace PChecker.Feedback;
 
 internal class CfgEventPatternObserver : IActorRuntimeLog
 {
-    private IMatcher<List<EventObj>> _matcher;
+    private EventSeqMatcher _matcher;
     private Dictionary<Event, string?> _senderMap = new();
     private List<EventObj> _events = new();
-    public CfgEventPatternObserver(IMatcher<List<EventObj>> matcher)
+    private HashSet<int> _visited = new();
+    public CfgEventPatternObserver(EventSeqMatcher matcher)
     {
         _matcher = matcher;
     }
@@ -179,10 +180,17 @@ internal class CfgEventPatternObserver : IActorRuntimeLog
     {
     }
 
+    public virtual int ShouldSave()
+    {
+        return _matcher.IsMatched(_events);
+    }
+    
     public virtual bool IsMatched()
     {
-        return _matcher.Matches(_events);
+        int result = _matcher.IsMatched(_events);
+        return result == -1;
     }
+    
 
     public void Reset()
     {
