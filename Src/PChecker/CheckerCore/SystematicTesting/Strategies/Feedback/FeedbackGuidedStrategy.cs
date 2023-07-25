@@ -147,8 +147,11 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
             {
                 if (state == -1)
                 {
-                    SavedGenerators.Add(Generator);
-                    _numMutationsWithoutNewSaved = 0;
+                    if (_visitedEventSeqs.Add(runtime.TimelineObserver.GetTimelineHash()))
+                    {
+                        SavedGenerators.Add(Generator);
+                        _numMutationsWithoutNewSaved = 0;
+                    }
                 }
             }
             else
