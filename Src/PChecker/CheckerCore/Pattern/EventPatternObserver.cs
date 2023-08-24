@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using PChecker.Actors;
 using PChecker.Actors.Events;
 using PChecker.Actors.Logging;
@@ -9,10 +10,10 @@ namespace PChecker.Feedback;
 
 internal class EventPatternObserver : IActorRuntimeLog
 {
-    private IMatcher _matcher;
+    private MethodInfo _matcher;
     private Dictionary<Event, string?> _senderMap = new();
     private List<EventObj> _events = new();
-    public EventPatternObserver(IMatcher matcher)
+    public EventPatternObserver(MethodInfo matcher)
     {
         _matcher = matcher;
     }
@@ -169,12 +170,12 @@ internal class EventPatternObserver : IActorRuntimeLog
 
     public virtual int ShouldSave()
     {
-        return _matcher.IsMatched(_events);
+        return (int) _matcher.Invoke(null, new [] { _events });
     }
     
     public virtual bool IsMatched()
     {
-        int result = _matcher.IsMatched(_events);
+        int result = (int) _matcher.Invoke(null, new [] { _events });
         return result == 1;
     }
     
