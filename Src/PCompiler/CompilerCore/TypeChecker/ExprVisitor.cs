@@ -19,8 +19,8 @@ namespace Plang.Compiler.TypeChecker
 
         public static Dictionary<string, NamedTupleEntry> ReservedEventFeilds = new Dictionary<string, NamedTupleEntry>()
         {
-            { EventFieldSender, new NamedTupleEntry("Sender", -1, PrimitiveType.Machine) },
-            { EventFieldReceiver, new NamedTupleEntry("Receiver", -1, PrimitiveType.Machine) },
+            { EventFieldSender, new NamedTupleEntry("Sender", -1, PrimitiveType.String) },
+            { EventFieldReceiver, new NamedTupleEntry("Receiver", -1, PrimitiveType.String) },
             { EventFieldState, new NamedTupleEntry("State", -1, PrimitiveType.String) },
             { EventFieldIndex, new NamedTupleEntry("Index", -1, PrimitiveType.Int) },
         };
