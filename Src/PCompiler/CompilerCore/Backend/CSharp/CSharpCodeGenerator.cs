@@ -824,10 +824,11 @@ namespace Plang.Compiler.Backend.CSharp
             var e = function.Signature.ParameterEvents[index];
             visitedVariables.Add(param);
             var start = index == 0 ? "0" : $"i{index - 1} + 1";
+            var paramName = context.Names.GetNameForDecl(param);
             context.WriteLine(output, $"for (var i{index} = {start} ; i{index} < events.Count; i{index} ++) " + "{");
-            context.WriteLine(output, $"var {param.Name}_obj = events[i{index}];");
-            context.WriteLine(output, $"if ({param.Name}_obj.Event is not {e.Name}) continue;");
-            context.WriteLine(output, $"var {param.Name} = ((PEvent) {param.Name}_obj.Event).Payload;");
+            context.WriteLine(output, $"var {paramName}_obj = events[i{index}];");
+            context.WriteLine(output, $"if ({paramName}_obj.Event is not {e.Name}) continue;");
+            context.WriteLine(output, $"var {paramName} = ((PEvent) {paramName}_obj.Event).Payload;");
 
             foreach (var bodyStatement in function.Body.Statements)
             {
@@ -1239,7 +1240,8 @@ namespace Plang.Compiler.Backend.CSharp
                 case NamedTupleAccessExpr namedTupleAccessExpr:
                     if (ExprVisitor.ReservedEventFeilds.ContainsValue(namedTupleAccessExpr.Entry))
                     {
-                        context.Write(output, "((PrtString) (");
+                        var type = GetCSharpType(namedTupleAccessExpr.Entry.Type);
+                        context.Write(output, $"(({type}) (");
                         WriteExpr(context, output, namedTupleAccessExpr.SubExpr);
                         context.Write(output, $"_obj).{namedTupleAccessExpr.FieldName})");
                     }

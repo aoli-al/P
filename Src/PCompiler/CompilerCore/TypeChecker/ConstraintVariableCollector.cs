@@ -22,6 +22,7 @@ public class ConstraintVariableCollector
                 return new HashSet<Variable>() { variableAccessExpr.Variable };
             case EnumElemRefExpr:
             case StringExpr:
+            case IntLiteralExpr:
                 break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(expr));

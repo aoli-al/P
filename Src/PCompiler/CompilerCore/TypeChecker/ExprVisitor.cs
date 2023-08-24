@@ -15,12 +15,14 @@ namespace Plang.Compiler.TypeChecker
         public static readonly string EventFieldSender = "MSG_sender";
         public static readonly string EventFieldReceiver = "MSG_receiver";
         public static readonly string EventFieldState = "MSG_state";
+        public static readonly string EventFieldIndex = "MSG_index";
 
         public static Dictionary<string, NamedTupleEntry> ReservedEventFeilds = new Dictionary<string, NamedTupleEntry>()
         {
             { EventFieldSender, new NamedTupleEntry("Sender", -1, PrimitiveType.Machine) },
             { EventFieldReceiver, new NamedTupleEntry("Receiver", -1, PrimitiveType.Machine) },
             { EventFieldState, new NamedTupleEntry("State", -1, PrimitiveType.String) },
+            { EventFieldIndex, new NamedTupleEntry("Index", -1, PrimitiveType.Int) },
         };
         private readonly ITranslationErrorHandler handler;
         private readonly Function method;
