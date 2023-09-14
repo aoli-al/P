@@ -84,6 +84,7 @@ namespace Plang.Options
             advancedGroup.AddArgument("discard-after", null, "For feedback strategy, discard saved generators after saving N inputs", typeof(int));
             advancedGroup.AddArgument("fixed-priority", null, "For feedback strategy, schedule generator mutations based on diversity", typeof(bool));
             advancedGroup.AddArgument("ignore-pattern", null, "For feedback strategy, ignore the pattern feedback", typeof(bool));
+            advancedGroup.AddArgument("no-priority-based", null, "For feedback strategy, disable priority based sampling.", typeof(bool));
         }
 
         /// <summary>
@@ -288,6 +289,9 @@ namespace Plang.Options
                 case "ignore-pattern":
                     checkerConfiguration.IgnorePatternFeedback = true;
                     break;
+                case "no-priority-based":
+                    checkerConfiguration.PriorityBasedSampling = false;
+                    break;
                 default:
                     throw new Exception(string.Format("Unhandled parsed argument: '{0}'", option.LongName));
             }
@@ -322,8 +326,7 @@ namespace Plang.Options
                 checkerConfiguration.SchedulingStrategy != "replay" &&
                 checkerConfiguration.SchedulingStrategy != "learn" &&
                 checkerConfiguration.SchedulingStrategy != "dfs" &&
-                checkerConfiguration.SchedulingStrategy != "stateless")
-            {
+                checkerConfiguration.SchedulingStrategy != "stateless") {
                 Error.CheckerReportAndExit("Please provide a scheduling strategy (see --sch* options)");
             }
 

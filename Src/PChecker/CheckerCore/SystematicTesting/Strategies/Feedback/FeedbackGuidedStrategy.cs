@@ -26,7 +26,7 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
 
     private readonly HashSet<int> _visitedTimelines = new();
 
-    private LinkedList<GeneratorRecord> _savedGenerators = new LinkedList<GeneratorRecord>();
+    private List<GeneratorRecord> _savedGenerators = new ();
     private int _pendingMutations = 0;
     private HashSet<GeneratorRecord> _visitedGenerators = new HashSet<GeneratorRecord>();
     private GeneratorRecord? _currentParent = null;
@@ -35,6 +35,7 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
     private readonly bool _diversityBasedPriority;
     private readonly bool _ignorePatternFeedback;
     private readonly int _discardAfter;
+    private readonly bool _priorityBasedSampling;
 
 
 
@@ -56,7 +57,7 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
         _diversityBasedPriority = checkerConfiguration.DiversityBasedPriority;
         _discardAfter = checkerConfiguration.DiscardAfter;
         _ignorePatternFeedback = checkerConfiguration.IgnorePatternFeedback;
-
+        _priorityBasedSampling = checkerConfiguration.PriorityBasedSampling;
     }
 
     /// <inheritdoc/>
@@ -194,36 +195,35 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
             var record = new GeneratorRecord(priority, Generator, timelineMinhash);
             if (_savedGenerators.Count == 0)
             {
-                _savedGenerators.AddLast(record);
+                _savedGenerators.Add(record);
                 return;
             }
 
-            if (priority <= _savedGenerators.Last.Value.Priority)
+            if (priority <= _savedGenerators.Last().Priority)
             {
                 return;
             }
 
             // Maybe use binary search to speed up in the future.
-            var cur = _savedGenerators.First;
-            while (cur != null && priority < cur.Value.Priority)
+            var index = 0;
+            while (index < _savedGenerators.Count && priority < _savedGenerators[index].Priority)
             {
-                cur = cur.Next;
+                index += 1;
             }
-
-            if (cur == null)
+            if (index >= _savedGenerators.Count)
             {
-                _savedGenerators.AddLast(record);
+                _savedGenerators.Add(record);
             }
             else
             {
-                _savedGenerators.AddBefore(cur, record);
+                _savedGenerators.Insert(index, record);
             }
 
-            if (_savedGenerators.Count > _discardAfter)
+            if (_priorityBasedSampling && _savedGenerators.Count > _discardAfter)
             {
-                var last = _savedGenerators.Last.Value;
+                var last = _savedGenerators.Last();
                 _visitedGenerators.Remove(last);
-                _savedGenerators.RemoveLast();
+                _savedGenerators.RemoveAt(_savedGenerators.Count - 1);
             }
         }
     }
@@ -243,9 +243,16 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
         }
         else
         {
+            if (!_priorityBasedSampling)
+            {
+                var rnd = new System.Random();
+                _currentParent = _savedGenerators[rnd.Next(_savedGenerators.Count)];
+                _pendingMutations = 1;
+            }
+            
             if (_currentParent == null)
             {
-                _currentParent = _savedGenerators.First!.Value;
+                _currentParent = _savedGenerators.First();
                 _visitedGenerators.Add(_currentParent);
                 _pendingMutations = _currentParent.Priority;
             }
@@ -265,7 +272,7 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
                 if (!found)
                 {
                     _visitedGenerators.Clear();
-                    _currentParent = _savedGenerators.First!.Value;
+                    _currentParent = _savedGenerators.First();
                     _visitedGenerators.Add(_currentParent);
                     _pendingMutations = _currentParent.Priority;
                 }

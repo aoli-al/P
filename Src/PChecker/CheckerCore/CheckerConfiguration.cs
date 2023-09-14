@@ -317,6 +317,12 @@ namespace PChecker
         /// </summary>
         [DataMember]
         public bool IgnorePatternFeedback;
+        
+        /// <summary>
+        /// For feedback strategy, use priority based sampling.
+        /// </summary>
+        [DataMember]
+        public bool PriorityBasedSampling;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="CheckerConfiguration"/> class.
@@ -370,6 +376,7 @@ namespace PChecker
             DiscardAfter = 100;
             DiversityBasedPriority = true;
             IgnorePatternFeedback = false;
+            PriorityBasedSampling = true;
 
             PSymArgs = "";
             JvmArgs = "";
