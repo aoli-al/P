@@ -199,11 +199,6 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
                 return;
             }
 
-            if (priority <= _savedGenerators.Last().Priority)
-            {
-                return;
-            }
-
             // Maybe use binary search to speed up in the future.
             var index = 0;
             while (index < _savedGenerators.Count && priority < _savedGenerators[index].Priority)
