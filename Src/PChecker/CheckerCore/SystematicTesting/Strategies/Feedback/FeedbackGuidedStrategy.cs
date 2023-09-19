@@ -36,6 +36,7 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
     private readonly bool _ignorePatternFeedback;
     private readonly int _discardAfter;
     private readonly bool _priorityBasedSampling;
+    private System.Random _rnd = new System.Random();
 
 
 
@@ -238,11 +239,10 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
         }
         else
         {
-            if (!_priorityBasedSampling)
+            if (!_priorityBasedSampling && _pendingMutations == 0)
             {
-                var rnd = new System.Random();
-                _currentParent = _savedGenerators[rnd.Next(_savedGenerators.Count)];
-                _pendingMutations = 1;
+                _currentParent = _savedGenerators[_rnd.Next(_savedGenerators.Count)];
+                _pendingMutations = 50;
             }
             
             if (_currentParent == null)
