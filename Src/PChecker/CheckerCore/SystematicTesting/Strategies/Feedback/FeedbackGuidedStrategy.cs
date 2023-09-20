@@ -177,7 +177,7 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
         }
 
         int priority = 0;
-        if (patternObserver == null || _ignorePatternFeedback)
+        if (patternObserver == null || _ignorePatternFeedback || !_priorityBasedSampling)
         {
             priority = diversityScore;
         }
@@ -191,7 +191,7 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
             }
         }
 
-        if (priority > 0 || !_priorityBasedSampling)
+        if (priority > 0)
         {
             var record = new GeneratorRecord(priority, Generator, timelineMinhash);
             if (_savedGenerators.Count == 0)
