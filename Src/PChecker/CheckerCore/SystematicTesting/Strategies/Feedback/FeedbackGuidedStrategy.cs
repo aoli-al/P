@@ -191,7 +191,7 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
             }
         }
 
-        if (priority > 0)
+        if (priority > 0 || !_priorityBasedSampling)
         {
             var record = new GeneratorRecord(priority, Generator, timelineMinhash);
             if (_savedGenerators.Count == 0)
