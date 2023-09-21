@@ -12,6 +12,7 @@ public class TimelineObserver: IActorRuntimeLog
 
     private HashSet<(string, string, string)> _timelines = new();
     private Dictionary<string, HashSet<string>> _allEvents = new();
+    private Dictionary<string, List<string>> _orderedEvents = new();
 
     public static readonly List<(int, int)> Coefficients = new();
     public static int NumOfCoefficients = 50;
@@ -61,6 +62,7 @@ public class TimelineObserver: IActorRuntimeLog
         string actor = id.Type;
         
         _allEvents.TryAdd(actor, new());
+        _orderedEvents.TryAdd(actor, new());
 
         string name = e.GetType().Name;
         foreach (var ev in _allEvents[actor])
@@ -68,18 +70,28 @@ public class TimelineObserver: IActorRuntimeLog
             _timelines.Add((actor, ev, name));
         }
         _allEvents[actor].Add(name);
+        _orderedEvents[actor].Add(name);
     }
 
     public int GetTimelineHash()
     {
-        return GetTimeline().GetHashCode();
+        return GetAbstractTimeline().GetHashCode();
     }
 
-    public string GetTimeline()
+    public string GetAbstractTimeline()
     {
         var tls = _timelines.Select(it => $"<{it.Item1}, {it.Item2}, {it.Item3}>").ToList();
         tls.Sort();
         return string.Join(";", tls);
+    }
+
+    public string GetTimeline()
+    {
+        return string.Join(";", _orderedEvents.Select(it =>
+        {
+            var events = string.Join(",", it.Value);
+            return $"{it.Key}: {events}";
+        }));
     }
 
     public List<int> GetTimelineMinhash()

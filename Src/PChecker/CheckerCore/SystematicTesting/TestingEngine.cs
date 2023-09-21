@@ -154,6 +154,8 @@ namespace PChecker.SystematicTesting
         /// </summary>
         private int PrintGuard;
 
+        private StreamWriter TimelineFileStream;
+
         /// <summary>
         /// Creates a new systematic testing engine.
         /// </summary>
@@ -161,6 +163,7 @@ namespace PChecker.SystematicTesting
             Create(checkerConfiguration, LoadAssembly(checkerConfiguration.AssemblyToBeAnalyzed));
         
         private Stopwatch watch;
+        private bool ShouldEmitTrace;
 
         /// <summary>
         /// Creates a new systematic testing engine.
@@ -270,7 +273,7 @@ namespace PChecker.SystematicTesting
 
             CancellationTokenSource = new CancellationTokenSource();
             PrintGuard = 1;
-
+            TimelineFileStream = new StreamWriter(checkerConfiguration.OutputDirectory + "timeline.txt");
             // Initialize a new instance of JsonVerboseLogs if running in verbose mode.
             if (checkerConfiguration.IsVerbose)
             {
@@ -524,6 +527,7 @@ namespace PChecker.SystematicTesting
 
             try
             {
+                ShouldEmitTrace = false;
                 // Creates a new instance of the controlled runtime.
                 runtime = new ControlledRuntime(_checkerConfiguration, Strategy, RandomValueGenerator);
                 if (_eventPatternObserver != null)
@@ -589,7 +593,7 @@ namespace PChecker.SystematicTesting
 
                 GatherTestingStatistics(runtime);
 
-                if (!IsReplayModeEnabled && TestReport.NumOfFoundBugs > 0)
+                if (ShouldEmitTrace || (!IsReplayModeEnabled && TestReport.NumOfFoundBugs > 0))
                 {
                     if (runtimeLogger != null)
                     {
@@ -598,6 +602,7 @@ namespace PChecker.SystematicTesting
                     }
 
                     ConstructReproducableTrace(runtime);
+                    TryEmitTraces(_checkerConfiguration.OutputDirectory, "trace_0");
                 }
 
             }
@@ -668,6 +673,11 @@ namespace PChecker.SystematicTesting
             return TestReport.GetText(_checkerConfiguration, "...");
         }
 
+        public void TryEmitTimeline(TimelineObserver observer)
+        {
+            TimelineFileStream.WriteLine(observer.GetTimeline());
+        }
+
         /// <summary>
         /// Tries to emit the testing traces, if any.
         /// </summary>
@@ -722,14 +732,14 @@ namespace PChecker.SystematicTesting
                 JsonSerializer.Serialize(jsonStreamFile, JsonLogger.Logs, jsonSerializerConfig);
             }
 
-            if (Graph != null)
+            if (Graph != null && !_checkerConfiguration.PerformFullExploration)
             {
                 var graphPath = directory + file + "_" + index + ".dgml";
                 Graph.SaveDgml(graphPath, true);
                 Logger.WriteLine($"..... Writing {graphPath}");
             }
 
-            if (!_checkerConfiguration.PerformFullExploration)
+            if (!_checkerConfiguration.PerformFullExploration || ShouldEmitTrace)
             {
                 // Emits the reproducable trace, if it exists.
                 if (!string.IsNullOrEmpty(ReproducableTrace))
@@ -899,10 +909,12 @@ namespace PChecker.SystematicTesting
 
                 if (TestReport.ExploredTimelines.Add(runtime.TimelineObserver.GetTimelineHash()))
                 {
-                    if (_checkerConfiguration.IsVerbose)
-                    {
-                        Logger.WriteLine($"... New timeline observed: {runtime.TimelineObserver.GetTimeline()}");
-                    }
+                    // if (_checkerConfiguration.IsVerbose)
+                    // {
+                    //     Logger.WriteLine($"... New timeline observed: {runtime.TimelineObserver.GetTimeline()}");
+                    // }
+                    TryEmitTimeline(runtime.TimelineObserver);
+                    ShouldEmitTrace = true;
                 }
                 // Also save the graph snapshot of the last iteration, if there is one.
                 Graph = coverageInfo.CoverageGraph;
