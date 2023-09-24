@@ -186,7 +186,7 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
             int coverageResult = patternObserver.ShouldSave();
             if (coverageResult == 1 || _savePartialMatch)
             {
-                double coverageScore = 1.0 / coverageResult;
+                double coverageScore = Math.Max(10 - coverageResult + 1, 1) / 10.0;
                 priority = (int)(diversityScore * coverageScore);
             }
         }
