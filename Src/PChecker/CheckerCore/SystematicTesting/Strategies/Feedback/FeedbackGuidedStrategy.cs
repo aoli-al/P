@@ -136,6 +136,11 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
             return 0;
         }
 
+        if (!_priorityBasedSampling)
+        {
+            return 20;
+        }
+
         if (_savedGenerators.Count == 0 || !_diversityBasedPriority)
         {
             return 20;
@@ -169,6 +174,7 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
     {
         var timelineHash = runtime.TimelineObserver.GetTimelineHash();
         var timelineMinhash = runtime.TimelineObserver.GetTimelineMinhash();
+        
         int diversityScore = ComputeDiversity(timelineHash, timelineMinhash);
 
         if (diversityScore == 0)
@@ -186,7 +192,7 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
             int coverageResult = patternObserver.ShouldSave();
             if (coverageResult == 1 || _savePartialMatch)
             {
-                double coverageScore = Math.Max(10 - coverageResult + 1, 1) / 10.0;
+                double coverageScore = 1.0 / coverageResult;
                 priority = (int)(diversityScore * coverageScore);
             }
         }

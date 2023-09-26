@@ -373,7 +373,7 @@ namespace PChecker
             EnableColoredConsoleOutput = false;
             DisableEnvironmentExit = true;
             SavePartialMatch = true;
-            DiscardAfter = 2000;
+            DiscardAfter = 100;
             DiversityBasedPriority = true;
             IgnorePatternFeedback = false;
             PriorityBasedSampling = true;
