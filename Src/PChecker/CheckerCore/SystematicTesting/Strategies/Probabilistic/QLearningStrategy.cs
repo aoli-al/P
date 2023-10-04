@@ -3,16 +3,19 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using PChecker.Feedback;
 using PChecker.Random;
 using PChecker.SystematicTesting.Operations;
+using PChecker.SystematicTesting.Strategies.Feedback;
 
 namespace PChecker.SystematicTesting.Strategies.Probabilistic
 {
     /// <summary>
     /// A probabilistic scheduling strategy that uses Q-learning.
     /// </summary>
-    internal class QLearningStrategy : RandomStrategy
+    internal class QLearningStrategy : RandomStrategy, IFeedbackGuidedStrategy
     {
         /// <summary>
         /// Map from program states to a map from next operations to their quality values.
@@ -147,7 +150,7 @@ namespace PChecker.SystematicTesting.Strategies.Probabilistic
         /// <inheritdoc/>
         public override bool PrepareForNextIteration()
         {
-            this.LearnQValues();
+            // this.LearnQValues();
             this.ExecutionPath.Clear();
             this.PreviousOperation = 0;
             this.Epochs++;
@@ -403,11 +406,121 @@ namespace PChecker.SystematicTesting.Strategies.Probabilistic
                 // Update the Q value of the next operation.
                 // Q = [(1-a) * Q]  +  [a * (rt + (g * maxQ))]
                 currOpQValues[nextOp] = ((1 - this.LearningRate) * currOpQValues[nextOp]) +
-                    (this.LearningRate * (reward + (this.Gamma * maxQ)));
+                                        (this.LearningRate * (reward + (this.Gamma * maxQ)));
 
                 node = node.Next;
                 idx++;
             }
+        }
+        
+        private readonly HashSet<int> _visitedTimelines = new();
+        private readonly List<List<int>> _savedTimelines = new();
+        private int ComputeDiversity(int timeline, List<int> hash)
+        {
+            if (!_visitedTimelines.Add(timeline))
+            {
+                return 0;
+            }
+
+            if (_savedTimelines.Count == 0)
+            {
+                return 20;
+            }
+
+            var maxSim = int.MinValue;
+            foreach (var record in _savedTimelines)
+            {
+                var similarity = 0;
+                for (int i = 0; i < hash.Count; i++)
+                {
+                    if (hash[i] == record[i])
+                    {
+                        similarity += 1;
+                    }
+                }
+
+                maxSim = Math.Max(maxSim, similarity);
+            }
+
+
+            return (hash.Count - maxSim) * 10 + 20;
+        }
+
+        public void ObserveRunningResults(EventPatternObserver patternObserver, ControlledRuntime runtime)
+        {
+            var timelineHash = runtime.TimelineObserver.GetTimelineHash();
+            var timelineMinhash = runtime.TimelineObserver.GetTimelineMinhash();
+            
+            int diversityScore = ComputeDiversity(timelineHash, timelineMinhash);
+            double reward = 0;
+            if (patternObserver == null)
+            {
+                reward = diversityScore;
+            }
+            else
+            {
+                int coverageResult = patternObserver.ShouldSave();
+                double coverageScore = 1.0 / coverageResult;
+                reward = diversityScore * coverageScore;
+            }
+
+            if (reward == 0)
+            {
+                reward = Double.MinValue;
+            }
+            else
+            {
+                _savedTimelines.Add(timelineMinhash);
+                reward = -1 / reward;
+            }
+
+            var node = this.ExecutionPath.First;
+            while (node != null && node.Next != null)
+            {
+
+                var (_, _, state) = node.Value;
+                var (nextOp, nextType, nextState) = node.Next.Value;
+
+                // Compute the max Q value.
+                double maxQ = double.MinValue;
+                foreach (var nextOpQValuePair in this.OperationQTable[nextState])
+                {
+                    if (nextOpQValuePair.Value > maxQ)
+                    {
+                        maxQ = nextOpQValuePair.Value;
+                    }
+                }
+
+                // Compute the reward. Program states that are visited with higher frequency result into lesser rewards.
+                if (reward > 0)
+                {
+                    // The reward has underflowed.
+                    reward = double.MinValue;
+                }
+
+                // Get the operations that are available from the current execution step.
+                var currOpQValues = this.OperationQTable[state];
+                if (!currOpQValues.ContainsKey(nextOp))
+                {
+                    currOpQValues.Add(nextOp, 0);
+                }
+
+                // Update the Q value of the next operation.
+                // Q = [(1-a) * Q]  +  [a * (rt + (g * maxQ))]
+                currOpQValues[nextOp] = ((1 - this.LearningRate) * currOpQValues[nextOp]) +
+                                        (this.LearningRate * (reward + (this.Gamma * maxQ)));
+
+                node = node.Next;
+            }
+        }
+
+        public int TotalSavedInputs()
+        {
+            return 0;
+        }
+
+        public void DumpStats(TextWriter writer)
+        {
         }
     }
 }
