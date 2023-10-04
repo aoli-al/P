@@ -464,7 +464,7 @@ namespace PChecker.SystematicTesting.Strategies.Probabilistic
                 reward = diversityScore * coverageScore;
             }
 
-            if (reward == 0)
+            if (Math.Abs(reward) < Double.Epsilon)
             {
                 reward = Double.MinValue;
             }
