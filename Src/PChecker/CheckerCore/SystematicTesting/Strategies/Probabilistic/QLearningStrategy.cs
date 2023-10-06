@@ -150,7 +150,7 @@ namespace PChecker.SystematicTesting.Strategies.Probabilistic
         /// <inheritdoc/>
         public override bool PrepareForNextIteration()
         {
-            // this.LearnQValues();
+            this.LearnQValues();
             this.ExecutionPath.Clear();
             this.PreviousOperation = 0;
             this.Epochs++;
