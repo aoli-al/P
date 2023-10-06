@@ -150,7 +150,6 @@ namespace PChecker.SystematicTesting.Strategies.Probabilistic
         /// <inheritdoc/>
         public override bool PrepareForNextIteration()
         {
-            this.LearnQValues();
             this.ExecutionPath.Clear();
             this.PreviousOperation = 0;
             this.Epochs++;
@@ -360,59 +359,6 @@ namespace PChecker.SystematicTesting.Strategies.Probabilistic
             }
         }
 
-        /// <summary>
-        /// Learn Q values using data from the current execution.
-        /// </summary>
-        private void LearnQValues()
-        {
-            var pathBuilder = new System.Text.StringBuilder();
-
-            int idx = 0;
-            var node = this.ExecutionPath.First;
-            while (node != null && node.Next != null)
-            {
-                pathBuilder.Append($"{node.Value.op},");
-
-                var (_, _, state) = node.Value;
-                var (nextOp, nextType, nextState) = node.Next.Value;
-
-                // Compute the max Q value.
-                double maxQ = double.MinValue;
-                foreach (var nextOpQValuePair in this.OperationQTable[nextState])
-                {
-                    if (nextOpQValuePair.Value > maxQ)
-                    {
-                        maxQ = nextOpQValuePair.Value;
-                    }
-                }
-
-                // Compute the reward. Program states that are visited with higher frequency result into lesser rewards.
-                var freq = this.TransitionFrequencies[nextState];
-                double reward = (nextType == AsyncOperationType.InjectFailure ?
-                    this.FailureInjectionReward : this.BasicActionReward) * freq;
-                if (reward > 0)
-                {
-                    // The reward has underflowed.
-                    reward = double.MinValue;
-                }
-
-                // Get the operations that are available from the current execution step.
-                var currOpQValues = this.OperationQTable[state];
-                if (!currOpQValues.ContainsKey(nextOp))
-                {
-                    currOpQValues.Add(nextOp, 0);
-                }
-
-                // Update the Q value of the next operation.
-                // Q = [(1-a) * Q]  +  [a * (rt + (g * maxQ))]
-                currOpQValues[nextOp] = ((1 - this.LearningRate) * currOpQValues[nextOp]) +
-                                        (this.LearningRate * (reward + (this.Gamma * maxQ)));
-
-                node = node.Next;
-                idx++;
-            }
-        }
-        
         private readonly HashSet<int> _visitedTimelines = new();
         private readonly List<List<int>> _savedTimelines = new();
         private int ComputeDiversity(int timeline, List<int> hash)
@@ -452,27 +398,23 @@ namespace PChecker.SystematicTesting.Strategies.Probabilistic
             var timelineMinhash = runtime.TimelineObserver.GetTimelineMinhash();
             
             int diversityScore = ComputeDiversity(timelineHash, timelineMinhash);
-            double reward = 0;
+            int priority = 0;
             if (patternObserver == null)
             {
-                reward = diversityScore;
+                priority = diversityScore;
             }
             else
             {
                 int coverageResult = patternObserver.ShouldSave();
-                double coverageScore = 1.0 / coverageResult;
-                reward = diversityScore * coverageScore;
+                priority = diversityScore / coverageResult;
             }
 
-            if (Math.Abs(reward) < Double.Epsilon)
-            {
-                reward = Double.MinValue;
-            }
-            else
+            if (priority != 0)
             {
                 _savedTimelines.Add(timelineMinhash);
-                reward = -1 / reward;
             }
+
+            priority += 1;
 
             var node = this.ExecutionPath.First;
             while (node != null && node.Next != null)
@@ -492,6 +434,9 @@ namespace PChecker.SystematicTesting.Strategies.Probabilistic
                 }
 
                 // Compute the reward. Program states that are visited with higher frequency result into lesser rewards.
+                var freq = this.TransitionFrequencies[nextState];
+                double reward = ((nextType == AsyncOperationType.InjectFailure ?
+                    this.FailureInjectionReward : this.BasicActionReward) * freq) / priority;
                 if (reward > 0)
                 {
                     // The reward has underflowed.
