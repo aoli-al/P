@@ -806,7 +806,8 @@ namespace Plang.Compiler.Backend.CSharp
 
         private void WriteScenario(CompilationContext context, StringWriter output, Function function)
         {
-            context.WriteLine(output, "int state = Int32.MaxValue;");
+            int numOfStmt = function.Body.Statements.Count + 1;
+            context.WriteLine(output, $"int state = {numOfStmt};");
             var eventPredicates = string.Join(" or ", function.Signature.ParameterEvents.Select(it => it.Name));
             context.WriteLine(output, $"events = events.Where(it => it.Event is {eventPredicates}).ToList();");
             WriteConstraintsRecursive(context, output, function, 0, new HashSet<Variable>(), 0);
