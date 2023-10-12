@@ -256,6 +256,7 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
                 _currentParent = _savedGenerators.First();
                 _visitedGenerators.Add(_currentParent);
                 _pendingMutations = _currentParent.Priority;
+                _pendingMutations = 50;
             }
 
             if (_pendingMutations == 0)
@@ -267,6 +268,7 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
                     _currentParent = generator;
                     _visitedGenerators.Add(generator);
                     _pendingMutations = generator.Priority;
+                    _pendingMutations = 50;
                     found = true;
                 }
 
@@ -276,6 +278,7 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
                     _currentParent = _savedGenerators.First();
                     _visitedGenerators.Add(_currentParent);
                     _pendingMutations = _currentParent.Priority;
+                    _pendingMutations = 50;
                 }
             }
 
