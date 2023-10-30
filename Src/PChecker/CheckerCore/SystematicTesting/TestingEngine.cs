@@ -309,7 +309,8 @@ namespace PChecker.SystematicTesting
             }
             else if (checkerConfiguration.SchedulingStrategy is "rl")
             {
-                Strategy = new QLearningStrategy(checkerConfiguration.MaxUnfairSchedulingSteps, RandomValueGenerator);
+                Strategy = new QLearningStrategy(checkerConfiguration.MaxUnfairSchedulingSteps, RandomValueGenerator,
+                    checkerConfiguration.DiversityBasedPriority);
             }
             else if (checkerConfiguration.SchedulingStrategy is "dfs")
             {

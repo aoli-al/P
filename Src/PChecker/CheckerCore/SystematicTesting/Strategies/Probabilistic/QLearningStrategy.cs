@@ -80,11 +80,13 @@ namespace PChecker.SystematicTesting.Strategies.Probabilistic
         /// </summary>
         private int Epochs;
 
+        private bool _diversityFeedback;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="QLearningStrategy"/> class.
         /// It uses the specified random number generator.
         /// </summary>
-        public QLearningStrategy(int maxSteps, IRandomValueGenerator random)
+        public QLearningStrategy(int maxSteps, IRandomValueGenerator random, bool diversityFeedback)
             : base(maxSteps, random)
         {
             this.OperationQTable = new Dictionary<int, Dictionary<ulong, double>>();
@@ -99,6 +101,7 @@ namespace PChecker.SystematicTesting.Strategies.Probabilistic
             this.FailureInjectionReward = -1000;
             this.BasicActionReward = -1;
             this.Epochs = 0;
+            _diversityFeedback = diversityFeedback;
         }
 
         /// <inheritdoc/>
@@ -397,24 +400,27 @@ namespace PChecker.SystematicTesting.Strategies.Probabilistic
             var timelineHash = runtime.TimelineObserver.GetTimelineHash();
             var timelineMinhash = runtime.TimelineObserver.GetTimelineMinhash();
             
-            int diversityScore = ComputeDiversity(timelineHash, timelineMinhash);
-            int priority = 0;
-            if (patternObserver == null)
-            {
-                priority = diversityScore;
-            }
-            else
-            {
-                int coverageResult = patternObserver.ShouldSave();
-                priority = diversityScore / coverageResult;
-            }
+            int priority = 1;
 
-            if (priority != 0)
+            if (_diversityFeedback)
             {
-                _savedTimelines.Add(timelineMinhash);
-            }
+                int diversityScore = ComputeDiversity(timelineHash, timelineMinhash);
+                if (patternObserver == null)
+                {
+                    priority = diversityScore;
+                }
+                else
+                {
+                    int coverageResult = patternObserver.ShouldSave();
+                    priority = diversityScore / coverageResult;
+                }
 
-            priority += 1;
+                if (priority != 0)
+                {
+                    _savedTimelines.Add(timelineMinhash);
+                }
+                priority += 1;
+            }
 
             var node = this.ExecutionPath.First;
             while (node != null && node.Next != null)
