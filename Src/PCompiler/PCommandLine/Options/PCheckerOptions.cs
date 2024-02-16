@@ -36,20 +36,20 @@ namespace Plang.Options
             basicOptions.AddArgument("testcase", "tc", "Test case to explore");
             basicOptions.AddArgument("smoke-testing", "tsmoke",
                 "Smoke test the program by running the checker on all the test cases", typeof(bool));
-            
+
             var basicGroup = Parser.GetOrCreateGroup("Basic", "Basic options");
             basicGroup.AddArgument("timeout", "t", "Timeout in seconds (disabled by default)", typeof(uint));
             basicGroup.AddArgument("memout", null, "Memory limit in Giga bytes (disabled by default)", typeof(double)).IsHidden = true;
             basicGroup.AddArgument("outdir", "o", "Dump output to directory (absolute or relative path)");
             basicGroup.AddArgument("verbose", "v", "Enable verbose log output during exploration", typeof(bool));
             basicGroup.AddArgument("debug", "d", "Enable debugging", typeof(bool)).IsHidden = true;
-            
+
             var exploreGroup = Parser.GetOrCreateGroup("explore", "Systematic exploration options");
             exploreGroup.AddArgument("iterations", "i", "Number of schedules to explore", typeof(uint));
             exploreGroup.AddArgument("max-steps", "ms", @"Max scheduling steps to be explored during systematic exploration (by default 10,000 unfair and 100,000 fair steps). You can provide one or two unsigned integer values", typeof(uint)).IsMultiValue = true;
             exploreGroup.AddArgument("fail-on-maxsteps", null, "Consider it a bug if the test hits the specified max-steps", typeof(bool));
             exploreGroup.AddArgument("liveness-temperature-threshold", null, "Specify the liveness temperature threshold is the liveness temperature value that triggers a liveness bug", typeof(uint)).IsHidden = true;
-            
+
             var schedulingGroup = Parser.GetOrCreateGroup("scheduling", "Search prioritization options");
             schedulingGroup.AddArgument("sch-random", null, "Choose the random scheduling strategy (this is the default)", typeof(bool));
             schedulingGroup.AddArgument("sch-feedback", null, "Choose the random scheduling strategy with feedback mutation", typeof(bool));
@@ -69,7 +69,7 @@ namespace Plang.Options
 
             var replayOptions = Parser.GetOrCreateGroup("replay", "Replay and debug options");
             replayOptions.AddArgument("replay", "r", "Schedule file to replay");
-            
+
             var advancedGroup = Parser.GetOrCreateGroup("advanced", "Advanced options");
             advancedGroup.AddArgument("explore", null, "Keep testing until the bound (e.g. iteration or time) is reached", typeof(bool));
             advancedGroup.AddArgument("seed", null, "Specify the random value generator seed", typeof(uint));
@@ -85,6 +85,7 @@ namespace Plang.Options
             advancedGroup.AddArgument("fixed-priority", null, "For feedback strategy, schedule generator mutations based on diversity", typeof(bool));
             advancedGroup.AddArgument("ignore-pattern", null, "For feedback strategy, ignore the pattern feedback", typeof(bool));
             advancedGroup.AddArgument("no-priority-based", null, "For feedback strategy, disable priority based sampling.", typeof(bool));
+            advancedGroup.AddArgument("conflict-analysis", null, "Enable POS conflict analysis.", typeof(bool));
         }
 
         /// <summary>
@@ -106,7 +107,7 @@ namespace Plang.Options
                 FindLocalPCompiledFile(configuration);
 
                 SanitizeConfiguration(configuration);
-                
+
             }
             catch (CommandLineException ex)
             {
@@ -292,6 +293,9 @@ namespace Plang.Options
                 case "no-priority-based":
                     checkerConfiguration.PriorityBasedSampling = false;
                     break;
+                case "conflict-analysis":
+                    checkerConfiguration.EnableConflictAnalysis = true;
+                    break;
                 default:
                     throw new Exception(string.Format("Unhandled parsed argument: '{0}'", option.LongName));
             }
@@ -334,11 +338,11 @@ namespace Plang.Options
             {
                 Error.CheckerReportAndExit("For the option '--max-steps N[,M]', please make sure that M >= N.");
             }
-            
+
             // the output directory correctly
             checkerConfiguration.SetOutputDirectory();
         }
-        
+
 
         private static void FindLocalPCompiledFile(CheckerConfiguration checkerConfiguration)
         {
@@ -346,7 +350,7 @@ namespace Plang.Options
             {
                 CommandLineOutput.WriteInfo(".. Searching for a P compiled file locally in the current folder");
                 var pathSep = Path.DirectorySeparatorChar;
-                
+
                 string filePattern =  checkerConfiguration.Mode switch
                 {
                     CheckerMode.BugFinding => "*.dll",
@@ -354,13 +358,13 @@ namespace Plang.Options
                     CheckerMode.Coverage => "*-jar-with-dependencies.jar",
                     _ => "*.dll"
                 };
-                
+
                 var enumerationOptions = new EnumerationOptions();
                 enumerationOptions.RecurseSubdirectories = true;
                 enumerationOptions.MaxRecursionDepth = 3;
-                
-                
-                var files = 
+
+
+                var files =
                     from file in Directory.GetFiles(Directory.GetCurrentDirectory(), filePattern, enumerationOptions)
                     let info = new FileInfo(file)
                     where (((info.Attributes & FileAttributes.Hidden) ==0)& ((info.Attributes & FileAttributes.System)==0))
@@ -372,7 +376,7 @@ namespace Plang.Options
                     {
                         if (!fileName.Contains($"CSharp{pathSep}"))
                             continue;
-                        if (fileName.EndsWith("PCheckerCore.dll") 
+                        if (fileName.EndsWith("PCheckerCore.dll")
                             || fileName.EndsWith("PCSharpRuntime.dll")
                             || fileName.EndsWith($"{pathSep}P.dll")
                             || fileName.EndsWith($"{pathSep}p.dll"))
@@ -392,7 +396,7 @@ namespace Plang.Options
                     CommandLineOutput.WriteInfo($".. Found a P compiled file: {checkerConfiguration.AssemblyToBeAnalyzed}");
                     break;
                 }
-                
+
                 if (checkerConfiguration.AssemblyToBeAnalyzed == string.Empty)
                 {
                     CommandLineOutput.WriteInfo(
@@ -401,6 +405,6 @@ namespace Plang.Options
                 }
             }
         }
-        
+
     }
 }

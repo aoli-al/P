@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using PChecker.Feedback;
 using PChecker.IO.Debugging;
 using PChecker.Random;
 using PChecker.SystematicTesting.Operations;
@@ -54,10 +55,12 @@ namespace PChecker.SystematicTesting.Strategies.Probabilistic
         /// </summary>
         private readonly SortedSet<int> PriorityChangePoints;
 
+        private readonly ConflictOpMonitor? _conflictOpMonitor;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="PCTStrategy"/> class.
         /// </summary>
-        public PCTStrategy(int maxSteps, int maxPrioritySwitchPoints, IRandomValueGenerator random)
+        public PCTStrategy(int maxSteps, int maxPrioritySwitchPoints, IRandomValueGenerator random, ConflictOpMonitor? monitor)
         {
             RandomValueGenerator = random;
             MaxScheduledSteps = maxSteps;
@@ -66,6 +69,7 @@ namespace PChecker.SystematicTesting.Strategies.Probabilistic
             MaxPrioritySwitchPoints = maxPrioritySwitchPoints;
             PrioritizedOperations = new List<AsyncOperation>();
             PriorityChangePoints = new SortedSet<int>();
+            _conflictOpMonitor = monitor;
         }
 
         /// <inheritdoc/>
@@ -83,10 +87,20 @@ namespace PChecker.SystematicTesting.Strategies.Probabilistic
             {
                 next = highestEnabledOp;
             }
-
+            if (_conflictOpMonitor != null) {
+                ResetPriorities(next, enabledOperations);
+            }
             ScheduledSteps++;
 
             return true;
+        }
+
+        public void ResetPriorities(AsyncOperation next, IEnumerable<AsyncOperation> ops) {
+            foreach (var op in ops) {
+                if (op != next && _conflictOpMonitor.IsRacing(next, op)) {
+                    PrioritizedOperations.Remove(op);
+                }
+            }
         }
 
         /// <inheritdoc/>

@@ -16,6 +16,9 @@ internal class RandomScheduleGenerator: IScheduleGenerator<RandomScheduleGenerat
     {
         Random = random;
         IntChoices = intChoices != null ? new RandomChoices<int>(intChoices) : new RandomChoices<int>(Random);
+        IntChoices.Data.Add(1);
+        IntChoices.Data.Add(1);
+        IntChoices.Data.Add(1);
     }
 
     public RandomScheduleGenerator(CheckerConfiguration checkerConfiguration):
@@ -34,8 +37,8 @@ internal class RandomScheduleGenerator: IScheduleGenerator<RandomScheduleGenerat
         {
             return enabledOperations[0];
         }
-
-        return enabledOperations[IntChoices.Next() % enabledOperations.Count];
+        var idx = IntChoices.Next() % enabledOperations.Count;
+        return enabledOperations[idx];
     }
 
     public RandomScheduleGenerator Mutate()

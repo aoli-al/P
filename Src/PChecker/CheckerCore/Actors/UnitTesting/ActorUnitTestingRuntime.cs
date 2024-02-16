@@ -114,11 +114,11 @@ namespace PChecker.Actors.UnitTesting
             throw new NotSupportedException("Invoking this method is not supported in actor unit testing mode.");
 
         /// <inheritdoc/>
-        public override void SendEvent(ActorId targetId, Event e, Guid opGroupId = default, SendOptions options = null) =>
+        public override void SendEvent(ActorId targetId, Event e, int loc, Guid opGroupId = default, SendOptions options = null) =>
             throw new NotSupportedException("Invoking this method is not supported in actor unit testing mode.");
 
         /// <inheritdoc/>
-        public override Task<bool> SendEventAndExecuteAsync(ActorId targetId, Event e, Guid opGroupId = default, SendOptions options = null) =>
+        public override Task<bool> SendEventAndExecuteAsync(ActorId targetId, Event e, int loc, Guid opGroupId = default, SendOptions options = null) =>
             throw new NotSupportedException("Invoking this method is not supported in actor unit testing mode.");
 
         /// <inheritdoc/>
@@ -159,7 +159,7 @@ namespace PChecker.Actors.UnitTesting
         }
 
         /// <inheritdoc/>
-        internal override void SendEvent(ActorId targetId, Event e, Actor sender, Guid opGroupId, SendOptions options)
+        internal override void SendEvent(ActorId targetId, Event e, Actor sender, int loc, Guid opGroupId, SendOptions options)
         {
             Assert(sender is null || Instance.Id.Equals(sender.Id),
                 string.Format("Only {0} can send an event during this test.", Instance.Id.ToString()));
@@ -199,10 +199,10 @@ namespace PChecker.Actors.UnitTesting
         }
 
         /// <inheritdoc/>
-        internal override Task<bool> SendEventAndExecuteAsync(ActorId targetId, Event e, Actor sender,
+        internal override Task<bool> SendEventAndExecuteAsync(ActorId targetId, Event e, Actor sender, int loc,
             Guid opGroupId, SendOptions options)
         {
-            SendEvent(targetId, e, sender, opGroupId, options);
+            SendEvent(targetId, e, sender, loc, opGroupId, options);
             return QuiescenceCompletionSource.Task;
         }
 
@@ -233,7 +233,7 @@ namespace PChecker.Actors.UnitTesting
                 }
             });
         }
-        
+
         /// <inheritdoc/>
         internal override void NotifyReceivedEvent(Actor actor, Event e, EventInfo eventInfo)
         {

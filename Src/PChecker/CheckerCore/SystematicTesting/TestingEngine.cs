@@ -66,6 +66,8 @@ namespace PChecker.SystematicTesting
 
         private EventPatternObserver? _eventPatternObserver;
 
+        private ConflictOpMonitor? _conflictOpMonitor;
+
         /// <summary>
         /// Random value generator used by the scheduling strategies.
         /// </summary>
@@ -89,7 +91,7 @@ namespace PChecker.SystematicTesting
         /// checkerConfiguration is specified.
         /// </summary>
         private JsonWriter JsonLogger;
-        
+
         /// <summary>
         /// Field declaration for the JsonVerboseLogs
         /// Structure representation is a list of the JsonWriter logs.
@@ -106,7 +108,7 @@ namespace PChecker.SystematicTesting
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             WriteIndented = true
         };
-        
+
         /// <summary>
         /// The profiler.
         /// </summary>
@@ -133,7 +135,7 @@ namespace PChecker.SystematicTesting
         /// checkerConfiguration is specified.
         /// </summary>
         private StringBuilder XmlLog;
-        
+
         /// <summary>
         /// The readable trace, if any.
         /// </summary>
@@ -156,12 +158,13 @@ namespace PChecker.SystematicTesting
 
         private StreamWriter TimelineFileStream;
 
+
         /// <summary>
         /// Creates a new systematic testing engine.
         /// </summary>
         public static TestingEngine Create(CheckerConfiguration checkerConfiguration) =>
             Create(checkerConfiguration, LoadAssembly(checkerConfiguration.AssemblyToBeAnalyzed));
-        
+
         private Stopwatch watch;
         private bool ShouldEmitTrace;
 
@@ -279,7 +282,11 @@ namespace PChecker.SystematicTesting
             {
                 JsonVerboseLogs = new List<List<LogEntry>>();
             }
-            
+            if (checkerConfiguration.EnableConflictAnalysis)
+            {
+                _conflictOpMonitor = new ConflictOpMonitor();
+            }
+
             if (checkerConfiguration.SchedulingStrategy is "replay")
             {
                 var scheduleDump = GetScheduleForReplay(out var isFair);
@@ -293,12 +300,12 @@ namespace PChecker.SystematicTesting
             else if (checkerConfiguration.SchedulingStrategy is "pct")
             {
                 Strategy = new PCTStrategy(checkerConfiguration.MaxUnfairSchedulingSteps, checkerConfiguration.StrategyBound,
-                    RandomValueGenerator);
+                    RandomValueGenerator, _conflictOpMonitor);
             }
             else if (checkerConfiguration.SchedulingStrategy is "fairpct")
             {
                 var prefixLength = checkerConfiguration.MaxUnfairSchedulingSteps;
-                var prefixStrategy = new PCTStrategy(prefixLength, checkerConfiguration.StrategyBound, RandomValueGenerator);
+                var prefixStrategy = new PCTStrategy(prefixLength, checkerConfiguration.StrategyBound, RandomValueGenerator, _conflictOpMonitor);
                 var suffixStrategy = new RandomStrategy(checkerConfiguration.MaxFairSchedulingSteps, RandomValueGenerator);
                 Strategy = new ComboStrategy(prefixStrategy, suffixStrategy);
             }
@@ -426,7 +433,7 @@ namespace PChecker.SystematicTesting
             {
                 try
                 {
-                    
+
                     // Invokes the user-specified initialization method.
                     TestMethodInfo.InitializeAllIterations();
                     watch = Stopwatch.StartNew();
@@ -496,7 +503,7 @@ namespace PChecker.SystematicTesting
                     using var jsonStreamFile = File.Create(jsonVerbosePath);
                     JsonSerializer.Serialize(jsonStreamFile, JsonVerboseLogs, jsonSerializerConfig);
                 }
-                
+
             }, CancellationTokenSource.Token);
         }
 
@@ -530,7 +537,7 @@ namespace PChecker.SystematicTesting
             {
                 ShouldEmitTrace = false;
                 // Creates a new instance of the controlled runtime.
-                runtime = new ControlledRuntime(_checkerConfiguration, Strategy, RandomValueGenerator);
+                runtime = new ControlledRuntime(_checkerConfiguration, Strategy, RandomValueGenerator, _conflictOpMonitor);
                 if (_eventPatternObserver != null)
                 {
                     runtime.RegisterLog(_eventPatternObserver);
@@ -539,7 +546,8 @@ namespace PChecker.SystematicTesting
                 // Always output a json log of the error
                 JsonLogger = new JsonWriter();
                 runtime.SetJsonLogger(JsonLogger);
-                    
+
+
                 // If verbosity is turned off, then intercept the program log, and also redirect
                 // the standard output and error streams to a nul logger.
                 if (!_checkerConfiguration.IsVerbose)
@@ -589,7 +597,7 @@ namespace PChecker.SystematicTesting
                 {
                     JsonVerboseLogs.Add(JsonLogger.Logs);
                 }
-                
+
                 runtime.LogWriter.LogCompletion();
 
                 GatherTestingStatistics(runtime);
@@ -645,6 +653,7 @@ namespace PChecker.SystematicTesting
                 runtimeLogger?.Dispose();
                 runtime?.Dispose();
                 _eventPatternObserver?.Reset();
+                _conflictOpMonitor?.Reset();
             }
         }
 
@@ -722,12 +731,12 @@ namespace PChecker.SystematicTesting
                 Logger.WriteLine($"..... Writing {xmlPath}");
                 File.WriteAllText(xmlPath, XmlLog.ToString());
             }
-            
+
             if (_checkerConfiguration.IsJsonLogEnabled)
             {
                 var jsonPath = directory + file + "_" + index + ".trace.json";
                 Logger.WriteLine($"..... Writing {jsonPath}");
-                
+
                 // Stream directly to the output file while serializing the JSON
                 using var jsonStreamFile = File.Create(jsonPath);
                 JsonSerializer.Serialize(jsonStreamFile, JsonLogger.Logs, jsonSerializerConfig);

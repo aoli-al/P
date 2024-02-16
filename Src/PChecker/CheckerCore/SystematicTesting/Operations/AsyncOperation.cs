@@ -24,7 +24,7 @@ namespace PChecker.SystematicTesting.Operations
 
         /// <inheritdoc/>
         public AsyncOperationStatus Status { get; internal set; }
-        
+
         /// <summary>
         /// The type of the operation.
         /// </summary>
@@ -51,6 +51,7 @@ namespace PChecker.SystematicTesting.Operations
         /// </summary>
         internal bool IsAwaiterControlled;
         public Event? LastEvent = null;
+        public int LastSentLoc = 0;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AsyncOperation"/> class.

@@ -80,7 +80,7 @@ namespace PChecker.Actors.UnitTesting
         public Task SendEventAsync(Event e)
         {
             Runtime.Assert(IsRunning, string.Format("{0} is not running.", ActorInstance.Id));
-            return Runtime.SendEventAndExecuteAsync(Runtime.Instance.Id, e, null, Guid.Empty, null);
+            return Runtime.SendEventAndExecuteAsync(Runtime.Instance.Id, e, null, 0, Guid.Empty, null);
         }
 
         /// <summary>
