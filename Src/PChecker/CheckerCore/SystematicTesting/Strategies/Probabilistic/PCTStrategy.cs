@@ -191,7 +191,7 @@ namespace PChecker.SystematicTesting.Strategies.Probabilistic
                 Debug.WriteLine("<PCTLog> Detected new operation '{0}' at index '{1}'.", op.Id, mIndex);
             }
 
-            if (PriorityChangePoints.Contains(ScheduledSteps))
+            if (_conflictOpMonitor == null && PriorityChangePoints.Contains(ScheduledSteps))
             {
                 if (ops.Count == 1)
                 {

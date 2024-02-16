@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using PChecker.Feedback;
 using PChecker.Generator.Mutator;
 using PChecker.Generator.Object;
 using PChecker.IO.Debugging;
@@ -19,8 +20,9 @@ internal sealed class PctScheduleGenerator: IScheduleGenerator<PctScheduleGenera
     public int MaxScheduleLength;
     private int _numSwitchPointsLeft;
     public int NumSwitchPoints;
+    private ConflictOpMonitor? _conflictOpMonitor;
 
-    public PctScheduleGenerator(System.Random random, RandomChoices<int>? priorityChoices, RandomChoices<double>? switchPointChoices, int numSwitchPoints, int maxScheduleLength)
+    public PctScheduleGenerator(System.Random random, RandomChoices<int>? priorityChoices, RandomChoices<double>? switchPointChoices, int numSwitchPoints, int maxScheduleLength, ConflictOpMonitor? monitor)
     {
         Random = random;
         PriorityChoices = priorityChoices != null ? new RandomChoices<int>(priorityChoices) : new RandomChoices<int>(random);
@@ -38,11 +40,11 @@ internal sealed class PctScheduleGenerator: IScheduleGenerator<PctScheduleGenera
         }
 
         _nextPriorityChangePoint = Utils.SampleGeometric(switchPointProbability, SwitchPointChoices.Next());
-
+        _conflictOpMonitor = monitor;
     }
 
-    public PctScheduleGenerator(CheckerConfiguration checkerConfiguration):
-        this(new System.Random((int?)checkerConfiguration.RandomGeneratorSeed ?? Guid.NewGuid().GetHashCode()), null, null, checkerConfiguration.StrategyBound,  0)
+    public PctScheduleGenerator(CheckerConfiguration checkerConfiguration, ConflictOpMonitor? monitor):
+        this(new System.Random((int?)checkerConfiguration.RandomGeneratorSeed ?? Guid.NewGuid().GetHashCode()), null, null, checkerConfiguration.StrategyBound,  0, monitor)
     {
     }
 
@@ -53,12 +55,12 @@ internal sealed class PctScheduleGenerator: IScheduleGenerator<PctScheduleGenera
 
     public PctScheduleGenerator New()
     {
-        return new PctScheduleGenerator(Random, null, null, NumSwitchPoints, MaxScheduleLength);
+        return new PctScheduleGenerator(Random, null, null, NumSwitchPoints, MaxScheduleLength, _conflictOpMonitor);
     }
 
     public PctScheduleGenerator Copy()
     {
-        return new PctScheduleGenerator(Random, PriorityChoices, SwitchPointChoices, NumSwitchPoints, MaxScheduleLength);
+        return new PctScheduleGenerator(Random, PriorityChoices, SwitchPointChoices, NumSwitchPoints, MaxScheduleLength, _conflictOpMonitor);
     }
 
     public AsyncOperation? NextRandomOperation(List<AsyncOperation> enabledOperations, AsyncOperation current)
@@ -91,7 +93,7 @@ internal sealed class PctScheduleGenerator: IScheduleGenerator<PctScheduleGenera
             Debug.WriteLine("<PCTLog> Detected new operation '{0}' at index '{1}'.", op.Id, mIndex);
         }
 
-        if (_nextPriorityChangePoint == _scheduledSteps)
+        if (_conflictOpMonitor == null && _nextPriorityChangePoint == _scheduledSteps)
         {
             if (ops.Count == 1)
             {
@@ -136,7 +138,19 @@ internal sealed class PctScheduleGenerator: IScheduleGenerator<PctScheduleGenera
             }
         }
 
+        if (_conflictOpMonitor != null) {
+            ResetPriorities(prioritizedSchedulable, ops);
+        }
+
         return prioritizedSchedulable;
+    }
+
+    public void ResetPriorities(AsyncOperation next, IEnumerable<AsyncOperation> ops) {
+        foreach (var op in ops) {
+            if (op != next && _conflictOpMonitor.IsRacing(next, op)) {
+                _prioritizedOperations.Remove(op);
+            }
+        }
     }
 
     private AsyncOperation GetHighestPriorityEnabledOperation(IEnumerable<AsyncOperation> choices)
