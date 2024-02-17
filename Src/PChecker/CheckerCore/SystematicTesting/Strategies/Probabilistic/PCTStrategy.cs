@@ -18,8 +18,31 @@ namespace PChecker.SystematicTesting.Strategies.Probabilistic
     /// This strategy is described in the following paper:
     /// https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/asplos277-pct.pdf
     /// </remarks>
-    internal sealed class PCTStrategy : ISchedulingStrategy
+    internal sealed class PCTStrategy : PriorizationSchedulingBase, ISchedulingStrategy
     {
+
+        sealed class PCTProvider : PriorizationProvider
+        {
+            /// <summary>
+            /// Random value generator.
+            /// </summary>
+            private readonly IRandomValueGenerator RandomValueGenerator;
+
+            public PCTProvider(IRandomValueGenerator generator)
+            {
+                RandomValueGenerator = generator;
+            }
+            public int AssignPriority(int numOps)
+            {
+                return RandomValueGenerator.Next(numOps) + 1;
+            }
+
+            public double SwitchPointChoice()
+            {
+                return RandomValueGenerator.NextDouble();
+            }
+        }
+
         /// <summary>
         /// Random value generator.
         /// </summary>
@@ -30,77 +53,22 @@ namespace PChecker.SystematicTesting.Strategies.Probabilistic
         /// </summary>
         private readonly int MaxScheduledSteps;
 
-        /// <summary>
-        /// The number of scheduled steps.
-        /// </summary>
-        private int ScheduledSteps;
-
-        /// <summary>
-        /// Max number of priority switch points.
-        /// </summary>
-        private readonly int MaxPrioritySwitchPoints;
-
-        /// <summary>
-        /// Approximate length of the schedule across all iterations.
-        /// </summary>
-        private int ScheduleLength;
-
-        /// <summary>
-        /// List of prioritized operations.
-        /// </summary>
-        private readonly List<AsyncOperation> PrioritizedOperations;
-
-        /// <summary>
-        /// Set of priority change points.
-        /// </summary>
-        private readonly SortedSet<int> PriorityChangePoints;
-
-        private readonly ConflictOpMonitor? _conflictOpMonitor;
+        private int _scheduledSteps;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PCTStrategy"/> class.
         /// </summary>
-        public PCTStrategy(int maxSteps, int maxPrioritySwitchPoints, IRandomValueGenerator random, ConflictOpMonitor? monitor)
+        public PCTStrategy(int maxSteps, int maxPrioritySwitchPoints, IRandomValueGenerator random, ConflictOpMonitor? monitor): base(maxPrioritySwitchPoints, 0, new PCTProvider(random), monitor)
         {
             RandomValueGenerator = random;
             MaxScheduledSteps = maxSteps;
-            ScheduledSteps = 0;
-            ScheduleLength = 0;
-            MaxPrioritySwitchPoints = maxPrioritySwitchPoints;
-            PrioritizedOperations = new List<AsyncOperation>();
-            PriorityChangePoints = new SortedSet<int>();
-            _conflictOpMonitor = monitor;
         }
 
         /// <inheritdoc/>
-        public bool GetNextOperation(AsyncOperation current, IEnumerable<AsyncOperation> ops, out AsyncOperation next)
+        public new bool GetNextOperation(AsyncOperation current, IEnumerable<AsyncOperation> ops, out AsyncOperation next)
         {
-            next = null;
-            var enabledOperations = ops.Where(op => op.Status is AsyncOperationStatus.Enabled).ToList();
-            if (enabledOperations.Count == 0)
-            {
-                return false;
-            }
-
-            var highestEnabledOp = GetPrioritizedOperation(enabledOperations, current);
-            if (next is null)
-            {
-                next = highestEnabledOp;
-            }
-            if (_conflictOpMonitor != null) {
-                ResetPriorities(next, enabledOperations);
-            }
-            ScheduledSteps++;
-
-            return true;
-        }
-
-        public void ResetPriorities(AsyncOperation next, IEnumerable<AsyncOperation> ops) {
-            foreach (var op in ops) {
-                if (op != next && _conflictOpMonitor.IsRacing(next, op)) {
-                    PrioritizedOperations.Remove(op);
-                }
-            }
+            _scheduledSteps++;
+            return base.GetNextOperation(current, ops, out next);
         }
 
         /// <inheritdoc/>
@@ -112,7 +80,7 @@ namespace PChecker.SystematicTesting.Strategies.Probabilistic
                 next = true;
             }
 
-            ScheduledSteps++;
+            _scheduledSteps++;
 
             return true;
         }
@@ -121,35 +89,12 @@ namespace PChecker.SystematicTesting.Strategies.Probabilistic
         public bool GetNextIntegerChoice(AsyncOperation current, int maxValue, out int next)
         {
             next = RandomValueGenerator.Next(maxValue);
-            ScheduledSteps++;
+            _scheduledSteps++;
             return true;
         }
 
         /// <inheritdoc/>
-        public bool PrepareForNextIteration()
-        {
-            ScheduleLength = Math.Max(ScheduleLength, ScheduledSteps);
-            ScheduledSteps = 0;
-
-            PrioritizedOperations.Clear();
-            PriorityChangePoints.Clear();
-
-            var range = new List<int>();
-            for (var idx = 0; idx < ScheduleLength; idx++)
-            {
-                range.Add(idx);
-            }
-
-            foreach (var point in Shuffle(range).Take(MaxPrioritySwitchPoints))
-            {
-                PriorityChangePoints.Add(point);
-            }
-
-            return true;
-        }
-
-        /// <inheritdoc/>
-        public int GetScheduledSteps() => ScheduledSteps;
+        public int GetScheduledSteps() => _scheduledSteps;
 
         /// <inheritdoc/>
         public bool HasReachedMaxSchedulingSteps()
@@ -159,7 +104,7 @@ namespace PChecker.SystematicTesting.Strategies.Probabilistic
                 return false;
             }
 
-            return ScheduledSteps >= MaxScheduledSteps;
+            return _scheduledSteps >= MaxScheduledSteps;
         }
 
         /// <inheritdoc/>
@@ -168,125 +113,16 @@ namespace PChecker.SystematicTesting.Strategies.Probabilistic
         /// <inheritdoc/>
         public string GetDescription()
         {
-            var text = $"pct[priority change points '{MaxPrioritySwitchPoints}' [" +
-                string.Join(", ", PriorityChangePoints.ToArray()) +
-                "], seed '" + RandomValueGenerator.Seed + "']";
+            var text = $"pct[seed '" + RandomValueGenerator.Seed + "']";
             return text;
         }
 
-        /// <summary>
-        /// Returns the prioritized operation.
-        /// </summary>
-        private AsyncOperation GetPrioritizedOperation(List<AsyncOperation> ops, AsyncOperation current)
-        {
-            if (PrioritizedOperations.Count == 0)
-            {
-                PrioritizedOperations.Add(current);
-            }
-
-            foreach (var op in ops.Where(op => !PrioritizedOperations.Contains(op)))
-            {
-                var mIndex = RandomValueGenerator.Next(PrioritizedOperations.Count) + 1;
-                PrioritizedOperations.Insert(mIndex, op);
-                Debug.WriteLine("<PCTLog> Detected new operation '{0}' at index '{1}'.", op.Id, mIndex);
-            }
-
-            if (_conflictOpMonitor == null && PriorityChangePoints.Contains(ScheduledSteps))
-            {
-                if (ops.Count == 1)
-                {
-                    MovePriorityChangePointForward();
-                }
-                else
-                {
-                    var priority = GetHighestPriorityEnabledOperation(ops);
-                    PrioritizedOperations.Remove(priority);
-                    PrioritizedOperations.Add(priority);
-                    Debug.WriteLine("<PCTLog> Operation '{0}' changes to lowest priority.", priority);
-                }
-            }
-
-            var prioritizedSchedulable = GetHighestPriorityEnabledOperation(ops);
-            if (Debug.IsEnabled)
-            {
-                Debug.WriteLine("<PCTLog> Prioritized schedulable '{0}'.", prioritizedSchedulable);
-                Debug.Write("<PCTLog> Priority list: ");
-                for (var idx = 0; idx < PrioritizedOperations.Count; idx++)
-                {
-                    if (idx < PrioritizedOperations.Count - 1)
-                    {
-                        Debug.Write("'{0}', ", PrioritizedOperations[idx]);
-                    }
-                    else
-                    {
-                        Debug.WriteLine("'{0}'.", PrioritizedOperations[idx]);
-                    }
-                }
-            }
-
-            return ops.First(op => op.Equals(prioritizedSchedulable));
-        }
-
-        /// <summary>
-        /// Returns the highest-priority enabled operation.
-        /// </summary>
-        private AsyncOperation GetHighestPriorityEnabledOperation(IEnumerable<AsyncOperation> choices)
-        {
-            AsyncOperation prioritizedOp = null;
-            foreach (var entity in PrioritizedOperations)
-            {
-                if (choices.Any(m => m == entity))
-                {
-                    prioritizedOp = entity;
-                    break;
-                }
-            }
-
-            return prioritizedOp;
-        }
-
-        /// <summary>
-        /// Shuffles the specified list using the Fisher-Yates algorithm.
-        /// </summary>
-        private IList<int> Shuffle(IList<int> list)
-        {
-            var result = new List<int>(list);
-            for (var idx = result.Count - 1; idx >= 1; idx--)
-            {
-                var point = RandomValueGenerator.Next(ScheduleLength);
-                var temp = result[idx];
-                result[idx] = result[point];
-                result[point] = temp;
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        /// Moves the current priority change point forward. This is a useful
-        /// optimization when a priority change point is assigned in either a
-        /// sequential execution or a nondeterministic choice.
-        /// </summary>
-        private void MovePriorityChangePointForward()
-        {
-            PriorityChangePoints.Remove(ScheduledSteps);
-            var newPriorityChangePoint = ScheduledSteps + 1;
-            while (PriorityChangePoints.Contains(newPriorityChangePoint))
-            {
-                newPriorityChangePoint++;
-            }
-
-            PriorityChangePoints.Add(newPriorityChangePoint);
-            Debug.WriteLine("<PCTLog> Moving priority change to '{0}'.", newPriorityChangePoint);
-        }
 
         /// <inheritdoc/>
         public void Reset()
         {
-            ScheduleLength = 0;
-            ScheduledSteps = 0;
-            PrioritizedOperations.Clear();
-            PriorityChangePoints.Clear();
+            _scheduledSteps = 0;
+            base.Reset();
         }
     }
 }
