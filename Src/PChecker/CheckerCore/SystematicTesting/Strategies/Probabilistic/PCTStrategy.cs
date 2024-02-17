@@ -117,6 +117,11 @@ namespace PChecker.SystematicTesting.Strategies.Probabilistic
             return text;
         }
 
+        public new bool PrepareForNextIteration() {
+            _scheduledSteps = 0;
+            return base.PrepareForNextIteration();
+        }
+
 
         /// <inheritdoc/>
         public void Reset()
