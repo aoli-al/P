@@ -143,6 +143,11 @@ internal class PriorizationSchedulingBase
             Debug.WriteLine("<PCTLog> Detected new operation '{0}' at index '{1}'.", op.Id, mIndex);
         }
 
+        if (ConflictOpMonitor != null && FindNonRacingOperation(ops, out var next))
+        {
+            return next;
+        }
+
         var prioritizedSchedulable = GetHighestPriorityEnabledOperation(ops);
         if (ConflictOpMonitor == null && _nextPriorityChangePoint == ScheduledSteps)
         {
@@ -189,6 +194,33 @@ internal class PriorizationSchedulingBase
         }
 
         return ops.First(op => op.Equals(prioritizedSchedulable));
+    }
+
+    private bool FindNonRacingOperation(IEnumerable<AsyncOperation> ops, out AsyncOperation next)
+    {
+        var nonRacingOps = ops.Where(op => op.Type != AsyncOperationType.Send);
+        if (!nonRacingOps.Any())
+        {
+            var sendOps = ops.Where(op => op.Type == AsyncOperationType.Send);
+            nonRacingOps = ops.Where(op => !sendOps.Any(o => o != op && ConflictOpMonitor.IsRacing(op, o)));
+        }
+
+        if (!nonRacingOps.Any())
+        {
+            next = null;
+            return false;
+        }
+        else if (!nonRacingOps.Skip(1).Any())
+        {
+            next = nonRacingOps.First();
+            return true;
+        }
+        else
+        {
+            next = GetHighestPriorityEnabledOperation(nonRacingOps);
+            return true;
+        }
+
     }
 
     public void Reset()
