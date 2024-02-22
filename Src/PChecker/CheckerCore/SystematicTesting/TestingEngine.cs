@@ -537,7 +537,10 @@ namespace PChecker.SystematicTesting
             {
                 ShouldEmitTrace = false;
                 // Creates a new instance of the controlled runtime.
-                runtime = new ControlledRuntime(_checkerConfiguration, Strategy, RandomValueGenerator, _conflictOpMonitor);
+                runtime = new ControlledRuntime(_checkerConfiguration, Strategy, RandomValueGenerator);
+                if (_conflictOpMonitor != null) {
+                    runtime.SendEventMOnitors.Add(_conflictOpMonitor);
+                }
                 if (_eventPatternObserver != null)
                 {
                     runtime.RegisterLog(_eventPatternObserver);

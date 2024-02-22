@@ -18,7 +18,7 @@ namespace PChecker.SystematicTesting.Strategies.Probabilistic
     /// This strategy is described in the following paper:
     /// https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/asplos277-pct.pdf
     /// </remarks>
-    internal sealed class PCTStrategy : PriorizationSchedulingBase, ISchedulingStrategy
+    internal class PCTStrategy : PriorizationSchedulingBase, ISchedulingStrategy
     {
 
         sealed class PCTProvider : PriorizationProvider

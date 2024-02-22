@@ -7,9 +7,8 @@ using PChecker.SystematicTesting.Operations;
 namespace PChecker.Feedback;
 
 
-public class ConflictOpMonitor
+public class ConflictOpMonitor: ISendEventMonitor
 {
-    public record Operation(string Sender, int Loc);
 
 
     // This dictionary stores all operations received by a machine.
@@ -22,7 +21,7 @@ public class ConflictOpMonitor
     {
         var receiverKey = receiver.ToString();
         var senderKey = sender.ToString();
-        var currentOp = new Operation(senderKey, loc);
+        var currentOp = new Operation(senderKey, receiverKey, loc);
         if (!incomingOps.ContainsKey(receiverKey))
         {
             incomingOps.Add(receiverKey, new HashSet<(Operation, Dictionary<string, int>)>());
@@ -51,14 +50,16 @@ public class ConflictOpMonitor
         }
     }
 
+    public void OnSendEventDone(ActorId sender, int loc, ActorId receiver, VectorClockGenerator currentVc) {}
+
     internal bool IsRacing(AsyncOperation op1, AsyncOperation op2)
     {
         if (op1.Type != AsyncOperationType.Send || op2.Type != AsyncOperationType.Send) {
             return false;
         }
 
-        var operation1 = new Operation(op1.Name, op1.LastSentLoc);
-        var operation2 = new Operation(op2.Name, op2.LastSentLoc);
+        var operation1 = new Operation(op1.Name, op1.LastSentReciver, op1.LastSentLoc);
+        var operation2 = new Operation(op2.Name, op2.LastSentReciver, op2.LastSentLoc);
 
         if (conflictOps.TryGetValue(operation1, out var ops)) {
             return ops.Contains(operation2);

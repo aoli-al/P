@@ -72,7 +72,7 @@ namespace PChecker.SystematicTesting
         /// </summary>
         internal readonly TimelineObserver TimelineObserver = new();
 
-        internal readonly ConflictOpMonitor? _conflictMonitor;
+        public List<ISendEventMonitor> SendEventMOnitors = new();
 
 
         /// <summary>
@@ -135,7 +135,7 @@ namespace PChecker.SystematicTesting
         /// Initializes a new instance of the <see cref="ControlledRuntime"/> class.
         /// </summary>
         internal ControlledRuntime(CheckerConfiguration checkerConfiguration, ISchedulingStrategy strategy,
-            IRandomValueGenerator valueGenerator, ConflictOpMonitor monitor = null)
+            IRandomValueGenerator valueGenerator)
             : base(checkerConfiguration, valueGenerator)
         {
             IsExecutionControlled = true;
@@ -153,7 +153,6 @@ namespace PChecker.SystematicTesting
 
             Scheduler = new OperationScheduler(this, strategy, scheduleTrace, CheckerConfiguration);
             TaskController = new TaskController(this, Scheduler);
-            _conflictMonitor = monitor;
 
             // Update the current asynchronous control flow with this runtime instance,
             // allowing future retrieval in the same asynchronous call stack.
@@ -475,8 +474,11 @@ namespace PChecker.SystematicTesting
 
             Scheduler.ScheduledOperation.LastEvent = e;
             Scheduler.ScheduledOperation.LastSentLoc = loc;
+            Scheduler.ScheduledOperation.LastSentReciver = targetId.ToString();
 
-            _conflictMonitor?.OnSendEvent(sender.Id, loc, targetId, LogWriter.JsonLogger.VcGenerator);
+            foreach (var monitor in SendEventMOnitors) {
+                monitor.OnSendEvent(sender.Id, loc, targetId, LogWriter.JsonLogger.VcGenerator);
+            }
 
             Scheduler.ScheduleNextEnabledOperation(AsyncOperationType.Send);
             ResetProgramCounter(sender as StateMachine);
@@ -500,6 +502,9 @@ namespace PChecker.SystematicTesting
                 return EnqueueStatus.Dropped;
             }
 
+            foreach (var monitor in SendEventMOnitors) {
+                monitor.OnSendEventDone(sender.Id, loc, targetId, LogWriter.JsonLogger.VcGenerator);
+            }
             var enqueueStatus = EnqueueEvent(target, e, sender, opGroupId, options);
             if (enqueueStatus == EnqueueStatus.Dropped)
             {
@@ -541,6 +546,7 @@ namespace PChecker.SystematicTesting
 
             LogWriter.LogSendEvent(actor.Id, sender?.Id.Name, sender?.Id.Type, stateName,
                 e, opGroupId, isTargetHalted: false);
+
             return actor.Enqueue(e, opGroupId, eventInfo);
         }
 

@@ -52,6 +52,7 @@ namespace PChecker.SystematicTesting.Operations
         internal bool IsAwaiterControlled;
         public Event? LastEvent = null;
         public int LastSentLoc = 0;
+        public string LastSentReciver = "";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AsyncOperation"/> class.
