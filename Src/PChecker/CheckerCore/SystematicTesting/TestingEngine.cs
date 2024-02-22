@@ -68,6 +68,8 @@ namespace PChecker.SystematicTesting
 
         private ConflictOpMonitor? _conflictOpMonitor;
 
+        private AbstractScheduleObserver? _abstractScheduleObserver;
+
         /// <summary>
         /// Random value generator used by the scheduling strategies.
         /// </summary>
@@ -282,7 +284,7 @@ namespace PChecker.SystematicTesting
             {
                 JsonVerboseLogs = new List<List<LogEntry>>();
             }
-            if (checkerConfiguration.EnableConflictAnalysis)
+            if (checkerConfiguration.EnableConflictAnalysis || checkerConfiguration.SchedulingStrategy == "rff")
             {
                 _conflictOpMonitor = new ConflictOpMonitor();
             }
@@ -301,6 +303,11 @@ namespace PChecker.SystematicTesting
             {
                 Strategy = new PCTStrategy(checkerConfiguration.MaxUnfairSchedulingSteps, checkerConfiguration.StrategyBound,
                     RandomValueGenerator, _conflictOpMonitor);
+            }
+            else if (checkerConfiguration.SchedulingStrategy is "rff")
+            {
+                _abstractScheduleObserver = new AbstractScheduleObserver();
+                Strategy = new AbstractFeedbackStrategy(checkerConfiguration.MaxUnfairSchedulingSteps, RandomValueGenerator, _conflictOpMonitor, _abstractScheduleObserver);
             }
             else if (checkerConfiguration.SchedulingStrategy is "fairpct")
             {
@@ -538,8 +545,13 @@ namespace PChecker.SystematicTesting
                 ShouldEmitTrace = false;
                 // Creates a new instance of the controlled runtime.
                 runtime = new ControlledRuntime(_checkerConfiguration, Strategy, RandomValueGenerator);
-                if (_conflictOpMonitor != null) {
+                if (_conflictOpMonitor != null)
+                {
                     runtime.SendEventMOnitors.Add(_conflictOpMonitor);
+                }
+                if (_abstractScheduleObserver != null)
+                {
+                    runtime.SendEventMOnitors.Add(_abstractScheduleObserver);
                 }
                 if (_eventPatternObserver != null)
                 {

@@ -35,13 +35,17 @@ internal class AbstractFeedbackStrategy: PCTStrategy
     int SchedNonDets = 0;
     int parentIndex = 0;
     int count = 0;
-    public AbstractSchedule currentSchedule;
-    public AbstractScheduleObserver observer;
-    public List<ScheduleRecord> savedSchedules;
+    internal AbstractSchedule currentSchedule;
+    internal AbstractScheduleObserver observer;
+    internal List<ScheduleRecord> savedSchedules = new();
+    public IRandomValueGenerator random;
 
-    public AbstractFeedbackStrategy(int maxSteps, int maxPrioritySwitchPoints, IRandomValueGenerator random, ConflictOpMonitor monitor, AbstractScheduleObserver observer) : base(maxSteps, maxPrioritySwitchPoints, random, monitor)
+    public AbstractFeedbackStrategy(int maxSteps, IRandomValueGenerator random, ConflictOpMonitor monitor, AbstractScheduleObserver observer) : base(maxSteps, -1, random, monitor)
     {
         this.observer = observer;
+        this.random = random;
+        currentSchedule = new AbstractSchedule(new HashSet<Constraint>());
+        observer.OnNewAbstractSchedule(currentSchedule);
     }
 
     public string GetDescription()
@@ -101,13 +105,14 @@ internal class AbstractFeedbackStrategy: PCTStrategy
 
         if (parentIndex == -1)
         {
-            currentSchedule = currentSchedule.Mutate();
+            currentSchedule = currentSchedule.Mutate(observer.allVisitedConstraints.Keys.ToList(), random);
         }
 
         if (count < savedSchedules[parentIndex].Priority)
         {
-            currentSchedule = savedSchedules[parentIndex].Schedule.Mutate()
+            currentSchedule = savedSchedules[parentIndex].Schedule.Mutate(observer.allVisitedConstraints.Keys.ToList(), random);
         }
+        observer.OnNewAbstractSchedule(currentSchedule);
         return true;
     }
 

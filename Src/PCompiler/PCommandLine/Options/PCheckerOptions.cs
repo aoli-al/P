@@ -56,6 +56,7 @@ namespace Plang.Options
             schedulingGroup.AddArgument("sch-2stagefeedback", null, "Choose the random scheduling strategy with 2 stage feedback mutation", typeof(bool));
 
             schedulingGroup.AddArgument("sch-feedbackpct", null, "Choose the PCT scheduling strategy with feedback mutation", typeof(uint));
+            schedulingGroup.AddArgument("sch-rff", null, "Choose the RFF scheduling strategy", typeof(bool));
             schedulingGroup.AddArgument("sch-2stagefeedbackpct", null, "Choose the PCT scheduling strategy with 2 stage feedback mutation", typeof(uint));
 
             schedulingGroup.AddArgument("sch-probabilistic", "sp", "Choose the probabilistic scheduling strategy with given probability for each scheduling decision where the probability is " +
@@ -188,6 +189,7 @@ namespace Plang.Options
                     checkerConfiguration.RandomGeneratorSeed = (uint)option.Value;
                     break;
                 case "sch-random":
+                case "sch-rff":
                 case "sch-feedback":
                 case "sch-2stagefeedback":
                     checkerConfiguration.SchedulingStrategy = option.LongName.Substring(4);
@@ -330,6 +332,7 @@ namespace Plang.Options
                 checkerConfiguration.SchedulingStrategy != "replay" &&
                 checkerConfiguration.SchedulingStrategy != "learn" &&
                 checkerConfiguration.SchedulingStrategy != "dfs" &&
+                checkerConfiguration.SchedulingStrategy != "rff" &&
                 checkerConfiguration.SchedulingStrategy != "stateless") {
                 Error.CheckerReportAndExit("Please provide a scheduling strategy (see --sch* options)");
             }

@@ -89,8 +89,12 @@ internal class AbstractScheduleObserver : ISendEventMonitor
     public HashSet<Constraint> GetRelevantConstraints(Operation op)
     {
         var constraints = new HashSet<Constraint>();
-        constraints.UnionWith(relevantConstraintsByReceiver[op.Receiver]);
-        constraints.UnionWith(relevantConstraintsByOp[op]);
+        if (relevantConstraintsByReceiver.ContainsKey(op.Receiver)) {
+            constraints.UnionWith(relevantConstraintsByReceiver[op.Receiver]);
+        }
+        if (relevantConstraintsByOp.ContainsKey(op)) {
+            constraints.UnionWith(relevantConstraintsByOp[op]);
+        }
         return constraints;
     }
 
@@ -256,7 +260,7 @@ internal class AbstractScheduleObserver : ISendEventMonitor
         queue.Add(new Operation(senderName, receiverName, loc));
         OnExecute(new Operation(senderName, receiverName, loc));
 
-        if (queue.Count != 0) {
+        if (queue.Count > 1) {
             var op1 = queue[queue.Count - 2];
             var op2 = queue[queue.Count - 1];
 
