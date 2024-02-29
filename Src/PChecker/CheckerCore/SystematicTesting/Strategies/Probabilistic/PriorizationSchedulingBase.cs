@@ -65,7 +65,7 @@ internal class PriorizationSchedulingBase
         _nextPriorityChangePoint = Generator.Mutator.Utils.SampleGeometric(switchPointProbability, Provider.SwitchPointChoice());
     }
 
-    public bool GetNextOperation(AsyncOperation current, IEnumerable<AsyncOperation> ops, out AsyncOperation next)
+    public virtual bool GetNextOperation(AsyncOperation current, IEnumerable<AsyncOperation> ops, out AsyncOperation next)
     {
         ScheduledSteps++;
         next = null;
@@ -231,7 +231,7 @@ internal class PriorizationSchedulingBase
     }
 
     /// <inheritdoc/>
-    public bool PrepareForNextIteration()
+    public virtual bool PrepareForNextIteration()
     {
         ScheduleLength = Math.Max(ScheduleLength, ScheduledSteps);
         ScheduledSteps = 0;

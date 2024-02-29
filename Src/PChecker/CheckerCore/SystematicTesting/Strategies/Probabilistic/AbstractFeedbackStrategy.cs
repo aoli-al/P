@@ -53,10 +53,11 @@ internal class AbstractFeedbackStrategy: PCTStrategy
         return "AbstractFeedbackStrategy";
     }
 
-    public new bool PrepareForNextIteration()
+    public override bool PrepareForNextIteration()
     {
         base.PrepareForNextIteration();
-        if (observer.CheckAbstractTimelineSatisfied() || observer.CheckNoveltyAndUpdate())
+        // We should always check novelty to update global states.
+        if (observer.CheckNoveltyAndUpdate() || observer.CheckAbstractTimelineSatisfied())
         {
             int traceHash = observer.GetTraceHash();
 
@@ -111,7 +112,15 @@ internal class AbstractFeedbackStrategy: PCTStrategy
         if (count < savedSchedules[parentIndex].Priority)
         {
             currentSchedule = savedSchedules[parentIndex].Schedule.Mutate(observer.allVisitedConstraints.Keys.ToList(), random);
+            count += 1;
+        } else {
+            parentIndex += 1;
+            if (parentIndex > savedSchedules.Count) {
+                parentIndex = 0;
+            }
+            count = 0;
         }
+
         observer.OnNewAbstractSchedule(currentSchedule);
         return true;
     }

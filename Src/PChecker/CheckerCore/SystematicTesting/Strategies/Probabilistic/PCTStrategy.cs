@@ -65,7 +65,7 @@ namespace PChecker.SystematicTesting.Strategies.Probabilistic
         }
 
         /// <inheritdoc/>
-        public new bool GetNextOperation(AsyncOperation current, IEnumerable<AsyncOperation> ops, out AsyncOperation next)
+        public override bool GetNextOperation(AsyncOperation current, IEnumerable<AsyncOperation> ops, out AsyncOperation next)
         {
             _scheduledSteps++;
             return base.GetNextOperation(current, ops, out next);
@@ -117,7 +117,7 @@ namespace PChecker.SystematicTesting.Strategies.Probabilistic
             return text;
         }
 
-        public new bool PrepareForNextIteration() {
+        public override bool PrepareForNextIteration() {
             _scheduledSteps = 0;
             return base.PrepareForNextIteration();
         }
