@@ -107,6 +107,7 @@ internal class AbstractFeedbackStrategy: PCTStrategy
         if (parentIndex == -1)
         {
             currentSchedule = currentSchedule.Mutate(observer.allVisitedConstraints.Keys.ToList(), random);
+            return true;
         }
 
         if (count < savedSchedules[parentIndex].Priority)
@@ -115,7 +116,7 @@ internal class AbstractFeedbackStrategy: PCTStrategy
             count += 1;
         } else {
             parentIndex += 1;
-            if (parentIndex > savedSchedules.Count) {
+            if (parentIndex >= savedSchedules.Count) {
                 parentIndex = 0;
             }
             count = 0;

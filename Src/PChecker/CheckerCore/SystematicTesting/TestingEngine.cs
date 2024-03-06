@@ -405,7 +405,9 @@ namespace PChecker.SystematicTesting
                 }
 
                 Error.ReportAndExit("Exception thrown during testing outside the context of an actor, " +
-                                    "possibly in a test method. Please use /debug /v:2 to print more information.");
+                                    "possibly in a test method. Please use /debug /v:2 to print more information." +
+                                    aex.Message + 
+                                    aex.InnerException?.StackTrace);
             }
             catch (Exception ex)
             {
