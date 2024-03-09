@@ -202,7 +202,7 @@ internal class PriorizationSchedulingBase
         if (!nonRacingOps.Any())
         {
             var sendOps = ops.Where(op => op.Type == AsyncOperationType.Send);
-            nonRacingOps = ops.Where(op => !sendOps.Any(o => o != op && ConflictOpMonitor.IsRacing(op, o)));
+            nonRacingOps = ops.Where(op => !ConflictOpMonitor.IsConflictingOp(op));
         }
 
         if (!nonRacingOps.Any())

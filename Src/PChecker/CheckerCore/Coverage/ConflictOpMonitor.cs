@@ -17,6 +17,8 @@ public class ConflictOpMonitor: ISendEventMonitor
     private Dictionary<string, HashSet<(Operation, Dictionary<string, int>)>> incomingOps = new();
 
     private Dictionary<Operation, HashSet<Operation>> conflictOps = new();
+    
+    
     public void OnSendEvent(ActorId sender, int loc, ActorId receiver, VectorClockGenerator currentVc)
     {
         var receiverKey = receiver.ToString();
@@ -95,5 +97,18 @@ public class ConflictOpMonitor: ISendEventMonitor
         }
         conflictOps[op1].Add(op2);
         conflictOps[op2].Add(op1);
+    }
+    internal bool IsConflictingOp(AsyncOperation op)
+    {
+        if (op.Type != AsyncOperationType.Send) {
+            return false;
+        }
+
+        var operation = new Operation(op.Name, op.LastSentReciver, op.LastSentLoc);
+        if (conflictOps.TryGetValue(operation, out var ops ))
+        {
+            return ops.Count != 0;
+        }
+        return false;
     }
 }
