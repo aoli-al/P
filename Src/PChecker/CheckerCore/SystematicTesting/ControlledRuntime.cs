@@ -474,7 +474,7 @@ namespace PChecker.SystematicTesting
 
             Scheduler.ScheduledOperation.LastEvent = e;
             Scheduler.ScheduledOperation.LastSentLoc = loc;
-            Scheduler.ScheduledOperation.LastSentReciver = targetId.ToString();
+            Scheduler.ScheduledOperation.LastSentReceiver = targetId.ToString();
 
             foreach (var monitor in SendEventMOnitors) {
                 monitor.OnSendEvent(sender.Id, loc, targetId, LogWriter.JsonLogger.VcGenerator);

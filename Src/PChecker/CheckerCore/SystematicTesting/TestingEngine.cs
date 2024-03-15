@@ -301,18 +301,24 @@ namespace PChecker.SystematicTesting
             }
             else if (checkerConfiguration.SchedulingStrategy is "pct")
             {
-                Strategy = new PCTStrategy(checkerConfiguration.MaxUnfairSchedulingSteps, checkerConfiguration.StrategyBound,
-                    RandomValueGenerator, _conflictOpMonitor);
+                var scheduler = new PCTScheduler(checkerConfiguration.StrategyBound, 0,
+                    new RandomPriorizationProvider(RandomValueGenerator));
+                Strategy = new PrioritizedSchedulingStrategy(checkerConfiguration.MaxUnfairSchedulingSteps,
+                    RandomValueGenerator, scheduler);
             }
             else if (checkerConfiguration.SchedulingStrategy is "rff")
             {
                 _abstractScheduleObserver = new AbstractScheduleObserver();
-                Strategy = new AbstractFeedbackStrategy(checkerConfiguration.MaxUnfairSchedulingSteps, RandomValueGenerator, _conflictOpMonitor, _abstractScheduleObserver);
+                var scheduler = new RFFScheduler(RandomValueGenerator, _conflictOpMonitor, _abstractScheduleObserver);
+                Strategy = new PrioritizedSchedulingStrategy(checkerConfiguration.MaxUnfairSchedulingSteps,
+                    RandomValueGenerator, scheduler);
             }
             else if (checkerConfiguration.SchedulingStrategy is "fairpct")
             {
                 var prefixLength = checkerConfiguration.MaxUnfairSchedulingSteps;
-                var prefixStrategy = new PCTStrategy(prefixLength, checkerConfiguration.StrategyBound, RandomValueGenerator, _conflictOpMonitor);
+                var scheduler = new PCTScheduler(checkerConfiguration.StrategyBound, 0,
+                    new RandomPriorizationProvider(RandomValueGenerator));
+                var prefixStrategy = new PrioritizedSchedulingStrategy(prefixLength, RandomValueGenerator, scheduler);
                 var suffixStrategy = new RandomStrategy(checkerConfiguration.MaxFairSchedulingSteps, RandomValueGenerator);
                 Strategy = new ComboStrategy(prefixStrategy, suffixStrategy);
             }
@@ -341,11 +347,11 @@ namespace PChecker.SystematicTesting
             }
             else if (checkerConfiguration.SchedulingStrategy is "feedbackpct")
             {
-                Strategy = new FeedbackGuidedStrategy<RandomInputGenerator, PctScheduleGenerator>(_checkerConfiguration, new RandomInputGenerator(checkerConfiguration), new PctScheduleGenerator(checkerConfiguration, _conflictOpMonitor));
+                Strategy = new FeedbackGuidedStrategy<RandomInputGenerator, PctScheduleGenerator>(_checkerConfiguration, new RandomInputGenerator(checkerConfiguration), new PctScheduleGenerator(checkerConfiguration));
             }
             else if (checkerConfiguration.SchedulingStrategy is "2stagefeedbackpct")
             {
-                Strategy = new TwoStageFeedbackStrategy<RandomInputGenerator, PctScheduleGenerator>(_checkerConfiguration, new RandomInputGenerator(checkerConfiguration), new PctScheduleGenerator(checkerConfiguration, _conflictOpMonitor));
+                Strategy = new TwoStageFeedbackStrategy<RandomInputGenerator, PctScheduleGenerator>(_checkerConfiguration, new RandomInputGenerator(checkerConfiguration), new PctScheduleGenerator(checkerConfiguration));
             }
             else if (checkerConfiguration.SchedulingStrategy is "portfolio")
             {

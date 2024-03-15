@@ -1,13 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Security.Cryptography.X509Certificates;
-using System.Threading.Tasks;
 using PChecker.Feedback;
 using PChecker.Random;
 using PChecker.SystematicTesting.Operations;
-using PChecker.SystematicTesting.Strategies;
 using PChecker.SystematicTesting.Strategies.Probabilistic;
 
 internal class ScheduleRecord
@@ -24,7 +20,7 @@ internal class ScheduleRecord
     }
 
 }
-internal class AbstractFeedbackStrategy: PCTStrategy
+internal class RFFScheduler: PrioritizedScheduler
 {
     // public List<(AbstractSchedule, )> savedSchedules = new();
     public Dictionary<int, ScheduleRecord> TraceRecords = new();
@@ -39,23 +35,20 @@ internal class AbstractFeedbackStrategy: PCTStrategy
     internal AbstractScheduleObserver observer;
     internal List<ScheduleRecord> savedSchedules = new();
     public IRandomValueGenerator random;
+    private POSScheduler _posScheduler;
 
-    public AbstractFeedbackStrategy(int maxSteps, IRandomValueGenerator random, ConflictOpMonitor monitor, AbstractScheduleObserver observer) : base(maxSteps, -1, random, monitor)
+    public RFFScheduler(IRandomValueGenerator random, ConflictOpMonitor monitor, AbstractScheduleObserver observer)
     {
         this.observer = observer;
         this.random = random;
         currentSchedule = new AbstractSchedule(new HashSet<Constraint>());
         observer.OnNewAbstractSchedule(currentSchedule);
+        _posScheduler = new POSScheduler(new RandomPriorizationProvider(random), monitor);
     }
 
-    public string GetDescription()
+    public bool PrepareForNextIteration()
     {
-        return "AbstractFeedbackStrategy";
-    }
-
-    public override bool PrepareForNextIteration()
-    {
-        base.PrepareForNextIteration();
+        _posScheduler.PrepareForNextIteration();
         // We should always check novelty to update global states.
         if (observer.CheckNoveltyAndUpdate() || observer.CheckAbstractTimelineSatisfied())
         {
@@ -128,10 +121,10 @@ internal class AbstractFeedbackStrategy: PCTStrategy
 
     public void Reset()
     {
-        base.Reset();
+        _posScheduler.Reset();
     }
 
-    public new bool GetNextOperation(AsyncOperation current, IEnumerable<AsyncOperation> ops, out AsyncOperation next)
+    public bool GetNextOperation(AsyncOperation current, IEnumerable<AsyncOperation> ops, out AsyncOperation next)
     {
         var enabledOperations = ops.Where(op => op.Status is AsyncOperationStatus.Enabled).ToList();
         if (enabledOperations.Count == 0)
@@ -153,21 +146,29 @@ internal class AbstractFeedbackStrategy: PCTStrategy
             var avoid = observer.ShouldAvoid(op);
             var take = observer.ShouldTake(op);
 
-            if (avoid && !take) {
+            if (avoid && !take)
+            {
                 lowPrioOps.Add(op);
-            } else if (!avoid && take) {
+            }
+            else if (!avoid && take)
+            {
                 highPrioOps.Add(op);
-            } else {
+            }
+            else
+            {
                 normalPrioOps.Add(op);
             }
 
         }
 
-        if (highPrioOps.Count > 0) {
-            return base.GetNextOperation(current, highPrioOps, out next);
-        } else if (normalPrioOps.Count > 0) {
-            return base.GetNextOperation(current, normalPrioOps, out next);
+        if (highPrioOps.Count > 0)
+        {
+            return _posScheduler.GetNextOperation(current, highPrioOps, out next);
         }
-        return base.GetNextOperation(current, lowPrioOps, out next);
+        if (normalPrioOps.Count > 0)
+        {
+            return _posScheduler.GetNextOperation(current, normalPrioOps, out next);
+        }
+        return _posScheduler.GetNextOperation(current, lowPrioOps, out next);
     }
 }

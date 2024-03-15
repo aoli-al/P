@@ -18,30 +18,8 @@ namespace PChecker.SystematicTesting.Strategies.Probabilistic
     /// This strategy is described in the following paper:
     /// https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/asplos277-pct.pdf
     /// </remarks>
-    internal class PCTStrategy : PriorizationSchedulingBase, ISchedulingStrategy
+    internal class PrioritizedSchedulingStrategy: ISchedulingStrategy
     {
-
-        sealed class PCTProvider : PriorizationProvider
-        {
-            /// <summary>
-            /// Random value generator.
-            /// </summary>
-            private readonly IRandomValueGenerator RandomValueGenerator;
-
-            public PCTProvider(IRandomValueGenerator generator)
-            {
-                RandomValueGenerator = generator;
-            }
-            public int AssignPriority(int numOps)
-            {
-                return RandomValueGenerator.Next(numOps) + 1;
-            }
-
-            public double SwitchPointChoice()
-            {
-                return RandomValueGenerator.NextDouble();
-            }
-        }
 
         /// <summary>
         /// Random value generator.
@@ -55,20 +33,23 @@ namespace PChecker.SystematicTesting.Strategies.Probabilistic
 
         private int _scheduledSteps;
 
+        private PrioritizedScheduler _scheduler;
+
         /// <summary>
-        /// Initializes a new instance of the <see cref="PCTStrategy"/> class.
+        /// Initializes a new instance of the <see cref="PrioritizedSchedulingStrategy"/> class.
         /// </summary>
-        public PCTStrategy(int maxSteps, int maxPrioritySwitchPoints, IRandomValueGenerator random, ConflictOpMonitor? monitor): base(maxPrioritySwitchPoints, 0, new PCTProvider(random), monitor)
+        public PrioritizedSchedulingStrategy(int maxSteps, IRandomValueGenerator random, PrioritizedScheduler scheduler)
         {
             RandomValueGenerator = random;
             MaxScheduledSteps = maxSteps;
+            _scheduler = scheduler;
         }
 
         /// <inheritdoc/>
-        public override bool GetNextOperation(AsyncOperation current, IEnumerable<AsyncOperation> ops, out AsyncOperation next)
+        public bool GetNextOperation(AsyncOperation current, IEnumerable<AsyncOperation> ops, out AsyncOperation next)
         {
             _scheduledSteps++;
-            return base.GetNextOperation(current, ops, out next);
+            return _scheduler.GetNextOperation(current, ops, out next);
         }
 
         /// <inheritdoc/>
@@ -117,9 +98,9 @@ namespace PChecker.SystematicTesting.Strategies.Probabilistic
             return text;
         }
 
-        public override bool PrepareForNextIteration() {
+        public bool PrepareForNextIteration() {
             _scheduledSteps = 0;
-            return base.PrepareForNextIteration();
+            return _scheduler.PrepareForNextIteration();
         }
 
 
@@ -127,7 +108,7 @@ namespace PChecker.SystematicTesting.Strategies.Probabilistic
         public void Reset()
         {
             _scheduledSteps = 0;
-            base.Reset();
+            _scheduler.Reset();
         }
     }
 }

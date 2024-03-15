@@ -1,13 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using PChecker.SystematicTesting.Operations;
 using Debug = PChecker.IO.Debugging.Debug;
 
 namespace PChecker.SystematicTesting.Strategies.Probabilistic;
 
-internal class PCTBase
+internal class PCTScheduler: PrioritizedScheduler
 {
     public readonly PriorizationProvider Provider;
 
@@ -37,7 +36,7 @@ internal class PCTBase
     /// <summary>
     /// Initializes a new instance of the <see cref="PCTStrategy"/> class.
     /// </summary>
-    public PCTBase(int maxPrioritySwitchPoints, int scheduleLength, PriorizationProvider provider)
+    public PCTScheduler(int maxPrioritySwitchPoints, int scheduleLength, PriorizationProvider provider)
     {
         Provider = provider;
         ScheduledSteps = 0;
