@@ -306,6 +306,12 @@ namespace PChecker.SystematicTesting
                 Strategy = new PrioritizedSchedulingStrategy(checkerConfiguration.MaxUnfairSchedulingSteps,
                     RandomValueGenerator, scheduler);
             }
+            else if (checkerConfiguration.SchedulingStrategy is "pos")
+            {
+                var scheduler = new POSScheduler(new RandomPriorizationProvider(RandomValueGenerator), _conflictOpMonitor);
+                Strategy = new PrioritizedSchedulingStrategy(checkerConfiguration.MaxUnfairSchedulingSteps,
+                    RandomValueGenerator, scheduler);
+            }
             else if (checkerConfiguration.SchedulingStrategy is "rff")
             {
                 _abstractScheduleObserver = new AbstractScheduleObserver();
@@ -348,6 +354,13 @@ namespace PChecker.SystematicTesting
             else if (checkerConfiguration.SchedulingStrategy is "feedbackpct")
             {
                 Strategy = new FeedbackGuidedStrategy<RandomInputGenerator, PctScheduleGenerator>(_checkerConfiguration, new RandomInputGenerator(checkerConfiguration), new PctScheduleGenerator(checkerConfiguration));
+            }
+            else if (checkerConfiguration.SchedulingStrategy is "feedbackpos")
+            {
+                Strategy = new FeedbackGuidedStrategy<RandomInputGenerator, POSScheduleGenerator>(
+                    _checkerConfiguration,
+                    new RandomInputGenerator(checkerConfiguration),
+                    new POSScheduleGenerator(_checkerConfiguration, _conflictOpMonitor));
             }
             else if (checkerConfiguration.SchedulingStrategy is "2stagefeedbackpct")
             {
