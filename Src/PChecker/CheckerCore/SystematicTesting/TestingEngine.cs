@@ -366,6 +366,12 @@ namespace PChecker.SystematicTesting
             {
                 Strategy = new FeedbackGuidedStrategy<RandomInputGenerator, PctScheduleGenerator>(_checkerConfiguration, new RandomInputGenerator(checkerConfiguration), new PctScheduleGenerator(checkerConfiguration));
             }
+            else if (checkerConfiguration.SchedulingStrategy is "feedbackpctcp")
+            {
+                _vcWrapper = new VectorClockWrapper();
+                Strategy = new FeedbackGuidedStrategy<RandomInputGenerator, PctcpScheduleGenerator>(_checkerConfiguration, new
+                    RandomInputGenerator(checkerConfiguration), new PctcpScheduleGenerator(checkerConfiguration, _vcWrapper));
+            }
             else if (checkerConfiguration.SchedulingStrategy is "feedbackpos")
             {
                 Strategy = new FeedbackGuidedStrategy<RandomInputGenerator, POSScheduleGenerator>(
@@ -460,6 +466,7 @@ namespace PChecker.SystematicTesting
                 _checkerConfiguration.SchedulingStrategy is "pct" ||
                 _checkerConfiguration.SchedulingStrategy is "poc" ||
                 _checkerConfiguration.SchedulingStrategy is "feedbackpct" ||
+                _checkerConfiguration.SchedulingStrategy is "feedbackpctcp" ||
                 _checkerConfiguration.SchedulingStrategy is "feedbackpos" ||
                 _checkerConfiguration.SchedulingStrategy is "fairpct" ||
                 _checkerConfiguration.SchedulingStrategy is "probabilistic" ||

@@ -56,6 +56,7 @@ namespace Plang.Options
             schedulingGroup.AddArgument("sch-2stagefeedback", null, "Choose the random scheduling strategy with 2 stage feedback mutation", typeof(bool));
 
             schedulingGroup.AddArgument("sch-feedbackpct", null, "Choose the PCT scheduling strategy with feedback mutation", typeof(uint));
+            schedulingGroup.AddArgument("sch-feedbackpctcp", null, "Choose the PCT scheduling strategy with feedback mutation", typeof(uint));
             schedulingGroup.AddArgument("sch-feedbackpos", null,
                 "Choose the PCT scheduling strategy with feedback mutation", typeof(bool));
             schedulingGroup.AddArgument("sch-rff", null, "Choose the RFF scheduling strategy", typeof(bool));
@@ -206,6 +207,7 @@ namespace Plang.Options
                 case "sch-pctcp":
                 case "sch-fairpct":
                 case "sch-feedbackpct":
+                case "sch-feedbackpctcp":
                 case "sch-2stagefeedbackpct":
                     checkerConfiguration.SchedulingStrategy = option.LongName.Substring(4);
                     checkerConfiguration.StrategyBound = (int)(uint)option.Value;
@@ -332,6 +334,7 @@ namespace Plang.Options
                 checkerConfiguration.SchedulingStrategy != "pctcp" &&
                 checkerConfiguration.SchedulingStrategy != "feedback" &&
                 checkerConfiguration.SchedulingStrategy != "feedbackpct" &&
+                checkerConfiguration.SchedulingStrategy != "feedbackpctcp" &&
                 checkerConfiguration.SchedulingStrategy != "feedbackpos" &&
                 checkerConfiguration.SchedulingStrategy != "2stagefeedback" &&
                 checkerConfiguration.SchedulingStrategy != "2stagefeedbackpct" &&
