@@ -19,7 +19,7 @@ internal class PCTCPScheduler: PrioritizedScheduler
     private int _nextPriorityChangePoint;
     private int _numSwitchPointsLeft;
     private int _nextOperationId = 0;
-    private HashSet<AsyncOperation> _chainedOperations = new();
+    private Dictionary<String, int> _chainedOperations = new();
     private List<Chain> _chains = new();
     private Dictionary<int, Dictionary<string, int>> _vectorClockMap = new();
     private Dictionary<int, HashSet<int>> _predMap = new();
@@ -95,7 +95,7 @@ internal class PCTCPScheduler: PrioritizedScheduler
         }
 
         _vectorClockMap[op.Id] = vc;
-        _chainedOperations.Add(operation);
+        _chainedOperations[operation.Name] = op.Id;
         _operationMap[op.Id] = op;
         _predMap[op.Id] = new();
 
@@ -122,8 +122,6 @@ internal class PCTCPScheduler: PrioritizedScheduler
                 _chains.Insert(index, newChain);
             }
         }
-
-        _chainedOperations.Add(operation);
     }
 
     private bool PlaceInChains(OperationWithId op)
@@ -174,16 +172,32 @@ internal class PCTCPScheduler: PrioritizedScheduler
     }
     private OperationWithId GetHighestPriorityEnabledOperation(IEnumerable<AsyncOperation> choices)
     {
-        foreach (var chain in _chains)
+        OperationWithId highestPriorityOp = null;
+        int currentPriority = Int32.MaxValue;
+        int currentChainIndex = Int32.MaxValue;
+        foreach (var op in choices)
         {
-            var op = chain.CurrentOp();
-            if (op != null)
+            var id = _chainedOperations[op.Name];
+            var chain = _chainMap[id];
+            var priotiy = _chains.IndexOf(chain);
+            if (priotiy < currentPriority)
             {
-                chain.CurrentIndex += 1;
-                return op;
+                highestPriorityOp = _operationMap[id];
+                currentPriority = priotiy;
+                currentChainIndex = chain.Ops.IndexOf(highestPriorityOp);
+            }
+
+            if (priotiy == currentPriority)
+            {
+                var index = chain.Ops.IndexOf(_operationMap[id]);
+                if (index < currentChainIndex)
+                {
+                    highestPriorityOp = _operationMap[id];
+                    currentChainIndex = index;
+                }
             }
         }
-        return null;
+        return highestPriorityOp;
     }
 
     private (int, int, Dictionary<int, (int, int)>) FindReducingSequence()
@@ -211,7 +225,9 @@ internal class PCTCPScheduler: PrioritizedScheduler
                     return (chain.Ops.Last().Id, opId, pairs);
                 }
             }
-            var temp = _predMap[opId].Where(it => !pairs.ContainsKey(_nextOperationMap[it])).ToList();
+            var temp = _predMap[opId].Where(it => _nextOperationMap.ContainsKey(it)
+                                                  && !pairs.ContainsKey(_nextOperationMap[it]))
+                .ToList();
             foreach (var predOp in temp)
             {
                 queue.Enqueue(_nextOperationMap[predOp]);
@@ -264,7 +280,7 @@ internal class PCTCPScheduler: PrioritizedScheduler
     private AsyncOperation GetPrioritizedOperation(List<AsyncOperation> ops, AsyncOperation current)
     {
         bool newOpAdded = false;
-        foreach (var op in ops.Where(op => !_chainedOperations.Contains(op)))
+        foreach (var op in ops.Where(op => !_chainedOperations.ContainsKey(op.Name)))
         {
             OnNewOperation(op);
             newOpAdded = true;
@@ -288,7 +304,6 @@ internal class PCTCPScheduler: PrioritizedScheduler
                 var chain = _chainMap[prioritizedSchedulable.Id];
                 _chains.Remove(chain);
                 _chains.Add(chain);
-                Debug.WriteLine("<PCTLog> Operation '{0}' changes to lowest priority.", prioritizedSchedulable);
 
                 _numSwitchPointsLeft -= 1;
                 // Update the next priority change point.
@@ -308,7 +323,8 @@ internal class PCTCPScheduler: PrioritizedScheduler
         if (prioritizedSchedulable != null)
         {
             scheduledOperation = ops.First(it => it.Name == prioritizedSchedulable.Sender);
-            _chainedOperations.Remove(scheduledOperation);
+            _chainedOperations.Remove(scheduledOperation.Name);
+            Debug.WriteLine("<PCTCT> scheduled operation: " + scheduledOperation.Name);
         }
 
         return scheduledOperation;
