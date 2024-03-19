@@ -26,7 +26,7 @@ internal class PCTCPScheduler: PrioritizedScheduler
     private Dictionary<int, OperationWithId> _operationMap = new();
     private Dictionary<int, Chain> _chainMap = new();
     private Dictionary<int, int> _nextOperationMap = new();
-    private VectorClockWrapper _vcWrapper;
+    internal VectorClockWrapper VcWrapper;
 
     public PCTCPScheduler(int maxPrioritySwitchPoints, int scheduleLength, PriorizationProvider provider,
         VectorClockWrapper vcWrapper)
@@ -36,7 +36,7 @@ internal class PCTCPScheduler: PrioritizedScheduler
         ScheduleLength = scheduleLength;
         MaxPrioritySwitchPoints = maxPrioritySwitchPoints;
         _numSwitchPointsLeft = maxPrioritySwitchPoints;
-        _vcWrapper = vcWrapper;
+        VcWrapper = vcWrapper;
 
         double switchPointProbability = 0.1;
         if (ScheduleLength != 0)
@@ -72,9 +72,9 @@ internal class PCTCPScheduler: PrioritizedScheduler
     private void OnNewOperation(AsyncOperation operation)
     {
         Dictionary<String, int> vc;
-        if (_vcWrapper.CurrentVC.ContextVcMap.ContainsKey(operation.Name))
+        if (VcWrapper.CurrentVC.ContextVcMap.ContainsKey(operation.Name))
         {
-            vc = _vcWrapper.CurrentVC
+            vc = VcWrapper.CurrentVC
                 .ContextVcMap[operation.Name]
                 .ToDictionary(entry => entry.Key, entry => entry.Value);
         }
