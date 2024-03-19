@@ -72,7 +72,7 @@ namespace PChecker.SystematicTesting
         /// </summary>
         internal readonly TimelineObserver TimelineObserver = new();
 
-        public List<ISendEventMonitor> SendEventMOnitors = new();
+        public List<ISendEventMonitor> SendEventMonitors = new();
 
 
         /// <summary>
@@ -476,7 +476,7 @@ namespace PChecker.SystematicTesting
             Scheduler.ScheduledOperation.LastSentLoc = loc;
             Scheduler.ScheduledOperation.LastSentReceiver = targetId.ToString();
 
-            foreach (var monitor in SendEventMOnitors) {
+            foreach (var monitor in SendEventMonitors) {
                 monitor.OnSendEvent(sender.Id, loc, targetId, LogWriter.JsonLogger.VcGenerator);
             }
 
@@ -502,7 +502,7 @@ namespace PChecker.SystematicTesting
                 return EnqueueStatus.Dropped;
             }
 
-            foreach (var monitor in SendEventMOnitors) {
+            foreach (var monitor in SendEventMonitors) {
                 monitor.OnSendEventDone(sender.Id, loc, targetId, LogWriter.JsonLogger.VcGenerator);
             }
             var enqueueStatus = EnqueueEvent(target, e, sender, opGroupId, options);

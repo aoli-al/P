@@ -274,6 +274,9 @@ internal class AbstractScheduleObserver : ISendEventMonitor
     }
 
     public int GetTraceHash() {
+        if (visitedConstraints.Count == 0) {
+            return "".GetHashCode();
+        }
         string s = visitedConstraints.ToList().Select(it => $"<{it.Key}, {it.Value}>").OrderBy(it => it).Aggregate((current, next) => current + "," + next);
         return s.GetHashCode();
     }
@@ -315,7 +318,8 @@ internal class AbstractScheduleObserver : ISendEventMonitor
             {
                 return true;
             }
-            if (avoidSendTo[operation.Receiver].Any(it => it.op2 != operation))
+            if (avoidSendTo.ContainsKey(operation.Receiver)
+                && avoidSendTo[operation.Receiver].Any(it => it.op2 != operation))
             {
                 return true;
             }
@@ -332,7 +336,8 @@ internal class AbstractScheduleObserver : ISendEventMonitor
             {
                 return true;
             }
-            if (lookingForSendTo[operation.Receiver].Any(it => it.op2 == operation))
+            if (lookingForSendTo.ContainsKey(operation.Receiver) &&
+                lookingForSendTo[operation.Receiver].Any(it => it.op2 == operation))
             {
                 return true;
             }

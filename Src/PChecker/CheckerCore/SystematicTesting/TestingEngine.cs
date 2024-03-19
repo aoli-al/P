@@ -29,6 +29,7 @@ using PChecker.SystematicTesting.Strategies;
 using PChecker.SystematicTesting.Strategies.Exhaustive;
 using PChecker.SystematicTesting.Strategies.Feedback;
 using PChecker.SystematicTesting.Strategies.Probabilistic;
+using PChecker.SystematicTesting.Strategies.Probabilistic.pctcp;
 using PChecker.SystematicTesting.Strategies.Special;
 using PChecker.SystematicTesting.Traces;
 using PChecker.Utilities;
@@ -67,6 +68,8 @@ namespace PChecker.SystematicTesting
         private EventPatternObserver? _eventPatternObserver;
 
         private ConflictOpMonitor? _conflictOpMonitor;
+
+        private VectorClockWrapper? _vcWrapper;
 
         private AbstractScheduleObserver? _abstractScheduleObserver;
 
@@ -306,6 +309,14 @@ namespace PChecker.SystematicTesting
                 Strategy = new PrioritizedSchedulingStrategy(checkerConfiguration.MaxUnfairSchedulingSteps,
                     RandomValueGenerator, scheduler);
             }
+            else if (checkerConfiguration.SchedulingStrategy is "pctcp")
+            {
+                _vcWrapper = new VectorClockWrapper();
+                var scheduler = new PCTCPScheduler(checkerConfiguration.StrategyBound, 0,
+                    new RandomPriorizationProvider(RandomValueGenerator), _vcWrapper);
+                Strategy = new PrioritizedSchedulingStrategy(checkerConfiguration.MaxUnfairSchedulingSteps,
+                    RandomValueGenerator, scheduler);
+            }
             else if (checkerConfiguration.SchedulingStrategy is "pos")
             {
                 var scheduler = new POSScheduler(new RandomPriorizationProvider(RandomValueGenerator), _conflictOpMonitor);
@@ -447,6 +458,9 @@ namespace PChecker.SystematicTesting
             var options = string.Empty;
             if (_checkerConfiguration.SchedulingStrategy is "random" ||
                 _checkerConfiguration.SchedulingStrategy is "pct" ||
+                _checkerConfiguration.SchedulingStrategy is "poc" ||
+                _checkerConfiguration.SchedulingStrategy is "feedbackpct" ||
+                _checkerConfiguration.SchedulingStrategy is "feedbackpos" ||
                 _checkerConfiguration.SchedulingStrategy is "fairpct" ||
                 _checkerConfiguration.SchedulingStrategy is "probabilistic" ||
                 _checkerConfiguration.SchedulingStrategy is "rl")
@@ -568,11 +582,11 @@ namespace PChecker.SystematicTesting
                 runtime = new ControlledRuntime(_checkerConfiguration, Strategy, RandomValueGenerator);
                 if (_conflictOpMonitor != null)
                 {
-                    runtime.SendEventMOnitors.Add(_conflictOpMonitor);
+                    runtime.SendEventMonitors.Add(_conflictOpMonitor);
                 }
                 if (_abstractScheduleObserver != null)
                 {
-                    runtime.SendEventMOnitors.Add(_abstractScheduleObserver);
+                    runtime.SendEventMonitors.Add(_abstractScheduleObserver);
                 }
                 if (_eventPatternObserver != null)
                 {
@@ -583,6 +597,10 @@ namespace PChecker.SystematicTesting
                 JsonLogger = new JsonWriter();
                 runtime.SetJsonLogger(JsonLogger);
 
+                if (_vcWrapper != null)
+                {
+                    _vcWrapper.CurrentVC = JsonLogger.VcGenerator;
+                }
 
                 // If verbosity is turned off, then intercept the program log, and also redirect
                 // the standard output and error streams to a nul logger.

@@ -56,12 +56,17 @@ namespace Plang.Options
             schedulingGroup.AddArgument("sch-2stagefeedback", null, "Choose the random scheduling strategy with 2 stage feedback mutation", typeof(bool));
 
             schedulingGroup.AddArgument("sch-feedbackpct", null, "Choose the PCT scheduling strategy with feedback mutation", typeof(uint));
+            schedulingGroup.AddArgument("sch-feedbackpos", null,
+                "Choose the PCT scheduling strategy with feedback mutation", typeof(bool));
             schedulingGroup.AddArgument("sch-rff", null, "Choose the RFF scheduling strategy", typeof(bool));
             schedulingGroup.AddArgument("sch-2stagefeedbackpct", null, "Choose the PCT scheduling strategy with 2 stage feedback mutation", typeof(uint));
 
             schedulingGroup.AddArgument("sch-probabilistic", "sp", "Choose the probabilistic scheduling strategy with given probability for each scheduling decision where the probability is " +
                                                                    "specified as the integer N in the equation 0.5 to the power of N.  So for N=1, the probability is 0.5, for N=2 the probability is 0.25, N=3 you get 0.125, etc.", typeof(uint));
             schedulingGroup.AddArgument("sch-pct", null, "Choose the PCT scheduling strategy with given maximum number of priority switch points", typeof(uint));
+            schedulingGroup.AddArgument("sch-pctcp", null, "Choose the PCT scheduling strategy with given maximum number of priority switch points", typeof(uint));
+            schedulingGroup.AddArgument("sch-pos", null,
+                "Choose the PCT scheduling strategy with given maximum number of priority switch points", typeof(bool));
             schedulingGroup.AddArgument("sch-fairpct", null, "Choose the fair PCT scheduling strategy with given maximum number of priority switch points", typeof(uint));
             schedulingGroup.AddArgument("sch-rl", null, "Choose the reinforcement learning (RL) scheduling strategy", typeof(bool)).IsHidden = true;
             var schCoverage = schedulingGroup.AddArgument("sch-coverage", null, "Choose the scheduling strategy for coverage mode (options: learn, random, dfs, stateless). (default: learn)");
@@ -190,12 +195,15 @@ namespace Plang.Options
                     break;
                 case "sch-random":
                 case "sch-rff":
+                case "sch-pos":
+                case "sch-feedbackpos":
                 case "sch-feedback":
                 case "sch-2stagefeedback":
                     checkerConfiguration.SchedulingStrategy = option.LongName.Substring(4);
                     break;
                 case "sch-probabilistic":
                 case "sch-pct":
+                case "sch-pctcp":
                 case "sch-fairpct":
                 case "sch-feedbackpct":
                 case "sch-2stagefeedbackpct":
@@ -321,11 +329,14 @@ namespace Plang.Options
 
             if (checkerConfiguration.SchedulingStrategy != "portfolio" &&
                 checkerConfiguration.SchedulingStrategy != "random" &&
+                checkerConfiguration.SchedulingStrategy != "pctcp" &&
                 checkerConfiguration.SchedulingStrategy != "feedback" &&
                 checkerConfiguration.SchedulingStrategy != "feedbackpct" &&
+                checkerConfiguration.SchedulingStrategy != "feedbackpos" &&
                 checkerConfiguration.SchedulingStrategy != "2stagefeedback" &&
                 checkerConfiguration.SchedulingStrategy != "2stagefeedbackpct" &&
                 checkerConfiguration.SchedulingStrategy != "pct" &&
+                checkerConfiguration.SchedulingStrategy != "pos" &&
                 checkerConfiguration.SchedulingStrategy != "fairpct" &&
                 checkerConfiguration.SchedulingStrategy != "probabilistic" &&
                 checkerConfiguration.SchedulingStrategy != "rl" &&
