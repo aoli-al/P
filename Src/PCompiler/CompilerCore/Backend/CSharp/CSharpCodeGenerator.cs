@@ -22,6 +22,8 @@ namespace Plang.Compiler.Backend.CSharp
         /// </summary>
         public bool HasCompilationStage => true;
 
+        private int _sendEventIndex = 0;
+
         public void Compile(ICompilerConfiguration job)
         {
             var csprojName = $"{job.ProjectName}.csproj";
@@ -29,7 +31,7 @@ namespace Plang.Compiler.Backend.CSharp
             var mainFilePath = Path.Combine(job.OutputDirectory.FullName, "Test.cs");
             var stdout = "";
             var stderr = "";
-            
+
             // create the .csproj file
             var csprojTemplate = Constants.csprojTemplate;
             csprojTemplate = csprojTemplate.Replace("-directory-",
@@ -1163,6 +1165,7 @@ namespace Plang.Compiler.Backend.CSharp
                 case SendStmt sendStmt:
                     context.Write(output, "currentMachine.TrySendEvent(");
                     WriteExpr(context, output, sendStmt.MachineExpr);
+                    context.Write(output, $", {_sendEventIndex++}");
                     context.Write(output, ", (Event)");
                     WriteExpr(context, output, sendStmt.Evt);
 

@@ -24,13 +24,13 @@ namespace PChecker
         /// </summary>
         [DataMember]
         public string OutputPath;
-        
+
         /// <summary>
         /// Timeout in seconds.
         /// </summary>
         [DataMember]
         public string OutputDirectory;
-        
+
         /// <summary>
         /// Timeout in seconds.
         /// </summary>
@@ -166,7 +166,7 @@ namespace PChecker
         /// If this option is enabled, the tester is hashing the program state.
         /// </summary>
         [DataMember] public bool IsProgramStateHashingEnabled;
-        
+
         /// <summary>
         /// The schedule file to be replayed.
         /// </summary>
@@ -219,14 +219,14 @@ namespace PChecker
         /// </summary>
         [DataMember]
         public bool IsXmlLogEnabled { get; set; }
-        
+
         /// <summary>
         /// Produce a JSON formatted runtime log file.
         /// Defaults to true.
         /// </summary>
         [DataMember]
         public bool IsJsonLogEnabled { get; set; } = false;
-        
+
         /// <summary>
         /// If specified, requests a custom runtime log to be used instead of the default.
         /// This is the AssemblyQualifiedName of the type to load.
@@ -317,12 +317,18 @@ namespace PChecker
         /// </summary>
         [DataMember]
         public bool IgnorePatternFeedback;
-        
+
         /// <summary>
         /// For feedback strategy, use priority based sampling.
         /// </summary>
         [DataMember]
         public bool PriorityBasedSampling;
+
+        /// <summary>
+        /// Enable conflict analysis for scheduling optimization.
+        /// </summary>
+        [DataMember]
+        public bool EnableConflictAnalysis;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="CheckerConfiguration"/> class.
@@ -369,7 +375,7 @@ namespace PChecker
             EnableDebugging = false;
 
             AdditionalCodeCoverageAssemblies = new Dictionary<string, bool>();
-            
+
             EnableColoredConsoleOutput = false;
             DisableEnvironmentExit = true;
             SavePartialMatch = true;
@@ -377,6 +383,7 @@ namespace PChecker
             DiversityBasedPriority = true;
             IgnorePatternFeedback = false;
             PriorityBasedSampling = true;
+            EnableConflictAnalysis = false;
 
             PSymArgs = "";
             JvmArgs = "";
@@ -425,7 +432,7 @@ namespace PChecker
             StrategyBound = (int)numPrioritySwitchPoints;
             return this;
         }
-        
+
         /// <summary>
         /// Updates the configuration to use the reinforcement learning (RL) scheduling strategy
         /// during systematic testing.
@@ -436,7 +443,7 @@ namespace PChecker
             this.IsProgramStateHashingEnabled = true;
             return this;
         }
-        
+
         /// <summary>
         /// Updates the checkerConfiguration to use the dfs scheduling strategy during systematic testing.
         /// </summary>
@@ -561,7 +568,7 @@ namespace PChecker
             IsXmlLogEnabled = isEnabled;
             return this;
         }
-        
+
         /// <summary>
         /// Set the <see cref="OutputDirectory"/> to either the user-specified <see cref="CheckerConfiguration.OutputPath"/>
         /// or to a unique output directory name in the same directory as <see cref="CheckerConfiguration.AssemblyToBeAnalyzed"/>

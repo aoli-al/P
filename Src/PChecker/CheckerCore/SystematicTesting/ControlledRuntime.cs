@@ -72,6 +72,8 @@ namespace PChecker.SystematicTesting
         /// </summary>
         internal readonly TimelineObserver TimelineObserver = new();
 
+        public List<ISendEventMonitor> SendEventMonitors = new();
+
 
         /// <summary>
         /// Returns the current hashed state of the monitors.
@@ -96,7 +98,7 @@ namespace PChecker.SystematicTesting
                 return hash;
             }
         }
-        
+
         /// <summary>
         /// Returns the current hashed state of the execution.
         /// </summary>
@@ -198,18 +200,18 @@ namespace PChecker.SystematicTesting
         }
 
         /// <inheritdoc/>
-        public override void SendEvent(ActorId targetId, Event e, Guid opGroupId = default, SendOptions options = null)
+        public override void SendEvent(ActorId targetId, Event e, int loc, Guid opGroupId = default, SendOptions options = null)
         {
             var senderOp = Scheduler.GetExecutingOperation<ActorOperation>();
-            SendEvent(targetId, e, senderOp?.Actor, opGroupId, options);
+            SendEvent(targetId, e, senderOp?.Actor, loc, opGroupId, options);
         }
 
         /// <inheritdoc/>
-        public override Task<bool> SendEventAndExecuteAsync(ActorId targetId, Event e, Guid opGroupId = default,
+        public override Task<bool> SendEventAndExecuteAsync(ActorId targetId, Event e, int loc, Guid opGroupId = default,
             SendOptions options = null)
         {
             var senderOp = Scheduler.GetExecutingOperation<ActorOperation>();
-            return SendEventAndExecuteAsync(targetId, e, senderOp?.Actor, opGroupId, options);
+            return SendEventAndExecuteAsync(targetId, e, senderOp?.Actor, loc, opGroupId, options);
         }
 
         /// <inheritdoc/>
@@ -405,7 +407,7 @@ namespace PChecker.SystematicTesting
         }
 
         /// <inheritdoc/>
-        internal override void SendEvent(ActorId targetId, Event e, Actor sender, Guid opGroupId, SendOptions options)
+        internal override void SendEvent(ActorId targetId, Event e, Actor sender, int loc, Guid opGroupId, SendOptions options)
         {
             if (e is null)
             {
@@ -426,7 +428,7 @@ namespace PChecker.SystematicTesting
 
             AssertExpectedCallerActor(sender, "SendEvent");
 
-            var enqueueStatus = EnqueueEvent(targetId, e, sender, opGroupId, options, out var target);
+            var enqueueStatus = EnqueueEvent(targetId, e, sender, loc, opGroupId, options, out var target);
             if (enqueueStatus is EnqueueStatus.EventHandlerNotRunning)
             {
                 RunActorEventHandler(target, null, false, null);
@@ -434,7 +436,7 @@ namespace PChecker.SystematicTesting
         }
 
         /// <inheritdoc/>
-        internal override async Task<bool> SendEventAndExecuteAsync(ActorId targetId, Event e, Actor sender,
+        internal override async Task<bool> SendEventAndExecuteAsync(ActorId targetId, Event e, Actor sender, int loc,
             Guid opGroupId, SendOptions options)
         {
             Assert(sender is StateMachine, "Only an actor can call 'SendEventAndExecuteAsync': avoid " +
@@ -443,7 +445,7 @@ namespace PChecker.SystematicTesting
             Assert(targetId != null, "{0} is sending event {1} to a null actor.", sender.Id, e);
             AssertExpectedCallerActor(sender, "SendEventAndExecuteAsync");
 
-            var enqueueStatus = EnqueueEvent(targetId, e, sender, opGroupId, options, out var target);
+            var enqueueStatus = EnqueueEvent(targetId, e, sender, loc, opGroupId, options, out var target);
             if (enqueueStatus is EnqueueStatus.EventHandlerNotRunning)
             {
                 RunActorEventHandler(target, null, false, sender as StateMachine);
@@ -462,7 +464,7 @@ namespace PChecker.SystematicTesting
         /// <summary>
         /// Enqueues an event to the actor with the specified id.
         /// </summary>
-        private EnqueueStatus EnqueueEvent(ActorId targetId, Event e, Actor sender, Guid opGroupId,
+        private EnqueueStatus EnqueueEvent(ActorId targetId, Event e, Actor sender, int loc, Guid opGroupId,
             SendOptions options, out Actor target)
         {
             target = Scheduler.GetOperationWithId<ActorOperation>(targetId.Value)?.Actor;
@@ -471,6 +473,13 @@ namespace PChecker.SystematicTesting
                 e.GetType().FullName, targetId.Value);
 
             Scheduler.ScheduledOperation.LastEvent = e;
+            Scheduler.ScheduledOperation.LastSentLoc = loc;
+            Scheduler.ScheduledOperation.LastSentReceiver = targetId.ToString();
+
+            foreach (var monitor in SendEventMonitors) {
+                monitor.OnSendEvent(sender.Id, loc, targetId, LogWriter.JsonLogger.VcGenerator);
+            }
+
             Scheduler.ScheduleNextEnabledOperation(AsyncOperationType.Send);
             ResetProgramCounter(sender as StateMachine);
 
@@ -493,6 +502,9 @@ namespace PChecker.SystematicTesting
                 return EnqueueStatus.Dropped;
             }
 
+            foreach (var monitor in SendEventMonitors) {
+                monitor.OnSendEventDone(sender.Id, loc, targetId, LogWriter.JsonLogger.VcGenerator);
+            }
             var enqueueStatus = EnqueueEvent(target, e, sender, opGroupId, options);
             if (enqueueStatus == EnqueueStatus.Dropped)
             {
@@ -534,6 +546,7 @@ namespace PChecker.SystematicTesting
 
             LogWriter.LogSendEvent(actor.Id, sender?.Id.Name, sender?.Id.Type, stateName,
                 e, opGroupId, isTargetHalted: false);
+
             return actor.Enqueue(e, opGroupId, eventInfo);
         }
 

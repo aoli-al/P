@@ -29,6 +29,7 @@ using PChecker.SystematicTesting.Strategies;
 using PChecker.SystematicTesting.Strategies.Exhaustive;
 using PChecker.SystematicTesting.Strategies.Feedback;
 using PChecker.SystematicTesting.Strategies.Probabilistic;
+using PChecker.SystematicTesting.Strategies.Probabilistic.pctcp;
 using PChecker.SystematicTesting.Strategies.Special;
 using PChecker.SystematicTesting.Traces;
 using PChecker.Utilities;
@@ -66,6 +67,12 @@ namespace PChecker.SystematicTesting
 
         private EventPatternObserver? _eventPatternObserver;
 
+        private ConflictOpMonitor? _conflictOpMonitor;
+
+        private VectorClockWrapper? _vcWrapper;
+
+        private AbstractScheduleObserver? _abstractScheduleObserver;
+
         /// <summary>
         /// Random value generator used by the scheduling strategies.
         /// </summary>
@@ -89,7 +96,7 @@ namespace PChecker.SystematicTesting
         /// checkerConfiguration is specified.
         /// </summary>
         private JsonWriter JsonLogger;
-        
+
         /// <summary>
         /// Field declaration for the JsonVerboseLogs
         /// Structure representation is a list of the JsonWriter logs.
@@ -106,7 +113,7 @@ namespace PChecker.SystematicTesting
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             WriteIndented = true
         };
-        
+
         /// <summary>
         /// The profiler.
         /// </summary>
@@ -133,7 +140,7 @@ namespace PChecker.SystematicTesting
         /// checkerConfiguration is specified.
         /// </summary>
         private StringBuilder XmlLog;
-        
+
         /// <summary>
         /// The readable trace, if any.
         /// </summary>
@@ -156,12 +163,13 @@ namespace PChecker.SystematicTesting
 
         private StreamWriter TimelineFileStream;
 
+
         /// <summary>
         /// Creates a new systematic testing engine.
         /// </summary>
         public static TestingEngine Create(CheckerConfiguration checkerConfiguration) =>
             Create(checkerConfiguration, LoadAssembly(checkerConfiguration.AssemblyToBeAnalyzed));
-        
+
         private Stopwatch watch;
         private bool ShouldEmitTrace;
 
@@ -279,7 +287,11 @@ namespace PChecker.SystematicTesting
             {
                 JsonVerboseLogs = new List<List<LogEntry>>();
             }
-            
+            if (checkerConfiguration.EnableConflictAnalysis || checkerConfiguration.SchedulingStrategy == "rff")
+            {
+                _conflictOpMonitor = new ConflictOpMonitor();
+            }
+
             if (checkerConfiguration.SchedulingStrategy is "replay")
             {
                 var scheduleDump = GetScheduleForReplay(out var isFair);
@@ -292,13 +304,38 @@ namespace PChecker.SystematicTesting
             }
             else if (checkerConfiguration.SchedulingStrategy is "pct")
             {
-                Strategy = new PCTStrategy(checkerConfiguration.MaxUnfairSchedulingSteps, checkerConfiguration.StrategyBound,
-                    RandomValueGenerator);
+                var scheduler = new PCTScheduler(checkerConfiguration.StrategyBound, 0,
+                    new RandomPriorizationProvider(RandomValueGenerator));
+                Strategy = new PrioritizedSchedulingStrategy(checkerConfiguration.MaxUnfairSchedulingSteps,
+                    RandomValueGenerator, scheduler);
+            }
+            else if (checkerConfiguration.SchedulingStrategy is "pctcp")
+            {
+                _vcWrapper = new VectorClockWrapper();
+                var scheduler = new PCTCPScheduler(checkerConfiguration.StrategyBound, 0,
+                    new RandomPriorizationProvider(RandomValueGenerator), _vcWrapper);
+                Strategy = new PrioritizedSchedulingStrategy(checkerConfiguration.MaxUnfairSchedulingSteps,
+                    RandomValueGenerator, scheduler);
+            }
+            else if (checkerConfiguration.SchedulingStrategy is "pos")
+            {
+                var scheduler = new POSScheduler(new RandomPriorizationProvider(RandomValueGenerator), _conflictOpMonitor);
+                Strategy = new PrioritizedSchedulingStrategy(checkerConfiguration.MaxUnfairSchedulingSteps,
+                    RandomValueGenerator, scheduler);
+            }
+            else if (checkerConfiguration.SchedulingStrategy is "rff")
+            {
+                _abstractScheduleObserver = new AbstractScheduleObserver();
+                var scheduler = new RFFScheduler(RandomValueGenerator, _conflictOpMonitor, _abstractScheduleObserver);
+                Strategy = new PrioritizedSchedulingStrategy(checkerConfiguration.MaxUnfairSchedulingSteps,
+                    RandomValueGenerator, scheduler);
             }
             else if (checkerConfiguration.SchedulingStrategy is "fairpct")
             {
                 var prefixLength = checkerConfiguration.MaxUnfairSchedulingSteps;
-                var prefixStrategy = new PCTStrategy(prefixLength, checkerConfiguration.StrategyBound, RandomValueGenerator);
+                var scheduler = new PCTScheduler(checkerConfiguration.StrategyBound, 0,
+                    new RandomPriorizationProvider(RandomValueGenerator));
+                var prefixStrategy = new PrioritizedSchedulingStrategy(prefixLength, RandomValueGenerator, scheduler);
                 var suffixStrategy = new RandomStrategy(checkerConfiguration.MaxFairSchedulingSteps, RandomValueGenerator);
                 Strategy = new ComboStrategy(prefixStrategy, suffixStrategy);
             }
@@ -328,6 +365,19 @@ namespace PChecker.SystematicTesting
             else if (checkerConfiguration.SchedulingStrategy is "feedbackpct")
             {
                 Strategy = new FeedbackGuidedStrategy<RandomInputGenerator, PctScheduleGenerator>(_checkerConfiguration, new RandomInputGenerator(checkerConfiguration), new PctScheduleGenerator(checkerConfiguration));
+            }
+            else if (checkerConfiguration.SchedulingStrategy is "feedbackpctcp")
+            {
+                _vcWrapper = new VectorClockWrapper();
+                Strategy = new FeedbackGuidedStrategy<RandomInputGenerator, PctcpScheduleGenerator>(_checkerConfiguration, new
+                    RandomInputGenerator(checkerConfiguration), new PctcpScheduleGenerator(checkerConfiguration, _vcWrapper));
+            }
+            else if (checkerConfiguration.SchedulingStrategy is "feedbackpos")
+            {
+                Strategy = new FeedbackGuidedStrategy<RandomInputGenerator, POSScheduleGenerator>(
+                    _checkerConfiguration,
+                    new RandomInputGenerator(checkerConfiguration),
+                    new POSScheduleGenerator(_checkerConfiguration, _conflictOpMonitor));
             }
             else if (checkerConfiguration.SchedulingStrategy is "2stagefeedbackpct")
             {
@@ -391,7 +441,9 @@ namespace PChecker.SystematicTesting
                 }
 
                 Error.ReportAndExit("Exception thrown during testing outside the context of an actor, " +
-                                    "possibly in a test method. Please use /debug /v:2 to print more information.");
+                                    "possibly in a test method. Please use /debug /v:2 to print more information." +
+                                    aex.Message + 
+                                    aex.InnerException?.StackTrace);
             }
             catch (Exception ex)
             {
@@ -412,6 +464,10 @@ namespace PChecker.SystematicTesting
             var options = string.Empty;
             if (_checkerConfiguration.SchedulingStrategy is "random" ||
                 _checkerConfiguration.SchedulingStrategy is "pct" ||
+                _checkerConfiguration.SchedulingStrategy is "poc" ||
+                _checkerConfiguration.SchedulingStrategy is "feedbackpct" ||
+                _checkerConfiguration.SchedulingStrategy is "feedbackpctcp" ||
+                _checkerConfiguration.SchedulingStrategy is "feedbackpos" ||
                 _checkerConfiguration.SchedulingStrategy is "fairpct" ||
                 _checkerConfiguration.SchedulingStrategy is "probabilistic" ||
                 _checkerConfiguration.SchedulingStrategy is "rl")
@@ -426,7 +482,7 @@ namespace PChecker.SystematicTesting
             {
                 try
                 {
-                    
+
                     // Invokes the user-specified initialization method.
                     TestMethodInfo.InitializeAllIterations();
                     watch = Stopwatch.StartNew();
@@ -496,7 +552,7 @@ namespace PChecker.SystematicTesting
                     using var jsonStreamFile = File.Create(jsonVerbosePath);
                     JsonSerializer.Serialize(jsonStreamFile, JsonVerboseLogs, jsonSerializerConfig);
                 }
-                
+
             }, CancellationTokenSource.Token);
         }
 
@@ -531,6 +587,14 @@ namespace PChecker.SystematicTesting
                 ShouldEmitTrace = false;
                 // Creates a new instance of the controlled runtime.
                 runtime = new ControlledRuntime(_checkerConfiguration, Strategy, RandomValueGenerator);
+                if (_conflictOpMonitor != null)
+                {
+                    runtime.SendEventMonitors.Add(_conflictOpMonitor);
+                }
+                if (_abstractScheduleObserver != null)
+                {
+                    runtime.SendEventMonitors.Add(_abstractScheduleObserver);
+                }
                 if (_eventPatternObserver != null)
                 {
                     runtime.RegisterLog(_eventPatternObserver);
@@ -539,7 +603,12 @@ namespace PChecker.SystematicTesting
                 // Always output a json log of the error
                 JsonLogger = new JsonWriter();
                 runtime.SetJsonLogger(JsonLogger);
-                    
+
+                if (_vcWrapper != null)
+                {
+                    _vcWrapper.CurrentVC = JsonLogger.VcGenerator;
+                }
+
                 // If verbosity is turned off, then intercept the program log, and also redirect
                 // the standard output and error streams to a nul logger.
                 if (!_checkerConfiguration.IsVerbose)
@@ -589,7 +658,7 @@ namespace PChecker.SystematicTesting
                 {
                     JsonVerboseLogs.Add(JsonLogger.Logs);
                 }
-                
+
                 runtime.LogWriter.LogCompletion();
 
                 GatherTestingStatistics(runtime);
@@ -645,6 +714,7 @@ namespace PChecker.SystematicTesting
                 runtimeLogger?.Dispose();
                 runtime?.Dispose();
                 _eventPatternObserver?.Reset();
+                _conflictOpMonitor?.Reset();
             }
         }
 
@@ -722,12 +792,12 @@ namespace PChecker.SystematicTesting
                 Logger.WriteLine($"..... Writing {xmlPath}");
                 File.WriteAllText(xmlPath, XmlLog.ToString());
             }
-            
+
             if (_checkerConfiguration.IsJsonLogEnabled)
             {
                 var jsonPath = directory + file + "_" + index + ".trace.json";
                 Logger.WriteLine($"..... Writing {jsonPath}");
-                
+
                 // Stream directly to the output file while serializing the JSON
                 using var jsonStreamFile = File.Create(jsonPath);
                 JsonSerializer.Serialize(jsonStreamFile, JsonLogger.Logs, jsonSerializerConfig);

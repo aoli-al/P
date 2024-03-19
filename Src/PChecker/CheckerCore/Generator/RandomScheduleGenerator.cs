@@ -34,8 +34,8 @@ internal class RandomScheduleGenerator: IScheduleGenerator<RandomScheduleGenerat
         {
             return enabledOperations[0];
         }
-
-        return enabledOperations[IntChoices.Next() % enabledOperations.Count];
+        var idx = IntChoices.Next() % enabledOperations.Count;
+        return enabledOperations[idx];
     }
 
     public RandomScheduleGenerator Mutate()

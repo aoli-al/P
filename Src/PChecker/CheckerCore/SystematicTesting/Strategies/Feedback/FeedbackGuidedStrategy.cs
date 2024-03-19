@@ -174,7 +174,7 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
     {
         var timelineHash = runtime.TimelineObserver.GetTimelineHash();
         var timelineMinhash = runtime.TimelineObserver.GetTimelineMinhash();
-        
+
         int diversityScore = ComputeDiversity(timelineHash, timelineMinhash);
 
         if (diversityScore == 0)
@@ -250,7 +250,7 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
                 _currentParent = _savedGenerators[_rnd.Next(_savedGenerators.Count)];
                 _pendingMutations = 50;
             }
-            
+
             if (_currentParent == null)
             {
                 _currentParent = _savedGenerators.First();
