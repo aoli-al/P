@@ -631,7 +631,7 @@ namespace PChecker.SystematicTesting
             // Runtime used to serialize and test the program in this schedule.
             ControlledRuntime runtime = null;
 
-            TimelineObserver timelineObserver = new TimelineObserver();
+            TimelineObserver timelineObserver = new TimelineObserver(_checkerConfiguration.ObservingEvents);
 
             // Logger used to intercept the program output if no custom logger
             // is installed and if verbosity is turned off.

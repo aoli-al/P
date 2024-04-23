@@ -7,9 +7,8 @@ using PChecker.Actors.Logging;
 
 namespace PChecker.Feedback;
 
-internal class TimelineObserver: ActorRuntimeLogBase
+internal class TimelineObserver(HashSet<string> observingEvents) : ActorRuntimeLogBase
 {
-
     private HashSet<(string, string, string)> _timelines = new();
     private Dictionary<string, HashSet<string>> _allEvents = new();
     private Dictionary<string, List<string>> _orderedEvents = new();
@@ -30,12 +29,19 @@ internal class TimelineObserver: ActorRuntimeLogBase
 
     public override void OnDequeueEvent(ActorId id, string stateName, Event e)
     {
+        string name = e.GetType().Name;
+        if (observingEvents.Count > 0)
+        {
+            if (!observingEvents.Contains(name))
+            {
+                return;
+            }
+        }
         string actor = id.Type;
         
         _allEvents.TryAdd(actor, new());
         _orderedEvents.TryAdd(actor, new());
 
-        string name = e.GetType().Name;
         foreach (var ev in _allEvents[actor])
         {
             _timelines.Add((actor, ev, name));

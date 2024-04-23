@@ -94,6 +94,7 @@ namespace Plang.Options
             advancedGroup.AddArgument("ignore-pattern", null, "For feedback strategy, ignore the pattern feedback", typeof(bool));
             advancedGroup.AddArgument("no-priority-based", null, "For feedback strategy, disable priority based sampling.", typeof(bool));
             advancedGroup.AddArgument("conflict-analysis", null, "Enable POS conflict analysis.", typeof(bool));
+            advancedGroup.AddArgument("observing-events", null, "Observing events for timeline construction.", typeof(string));
         }
 
         /// <summary>
@@ -359,6 +360,12 @@ namespace Plang.Options
                     break;
                 case "conflict-analysis":
                     checkerConfiguration.EnableConflictAnalysis = true;
+                    break;
+                case "observing-events":
+                    foreach (var e in ((string) option.Value).Split(","))
+                    {
+                        checkerConfiguration.ObservingEvents.Add(e);
+                    }
                     break;
                 case "pproj":
                     // do nothing, since already configured through UpdateConfigurationWithPProjectFile

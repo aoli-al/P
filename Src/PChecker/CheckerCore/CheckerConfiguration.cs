@@ -329,6 +329,12 @@ namespace PChecker
         public bool EnableConflictAnalysis;
 
         /// <summary>
+        /// Observing events for timeline construction.
+        /// </summary>
+        [DataMember]
+        public HashSet<string> ObservingEvents;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="CheckerConfiguration"/> class.
         /// </summary>
         protected CheckerConfiguration()
@@ -379,6 +385,7 @@ namespace PChecker
             IgnorePatternFeedback = false;
             PriorityBasedSampling = true;
             EnableConflictAnalysis = false;
+            ObservingEvents = new();
 
             PSymArgs = "";
             JvmArgs = "";
