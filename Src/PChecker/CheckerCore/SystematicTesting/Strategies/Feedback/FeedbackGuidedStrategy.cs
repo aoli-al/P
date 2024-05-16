@@ -277,17 +277,17 @@ internal class FeedbackGuidedStrategy<TInput, TSchedule> : IFeedbackGuidedStrate
                 {
                     // if (_rnd.NextDouble() < 0.5)
                     // {
-                    //     _visitedGenerators.Clear();
-                    //     _currentParent = _savedGenerators.First();
-                    //     _visitedGenerators.Add(_currentParent);
-                    //     _pendingMutations = _currentParent.Priority;
+                    _visitedGenerators.Clear();
+                    _currentParent = _savedGenerators.First();
+                    _visitedGenerators.Add(_currentParent);
+                    _pendingMutations = _currentParent.Priority;
                     // }
                     // else
                     // {
-                    _shouldExploreNew = true;
-                    _currentParent = null;
+                    // _shouldExploreNew = true;
+                    // _currentParent = null;
                     // }
-                    _pendingMutations = 50;
+                    // _pendingMutations = 50;
                 }
             }
 
