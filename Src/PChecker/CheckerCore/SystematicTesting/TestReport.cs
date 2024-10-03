@@ -101,6 +101,19 @@ namespace PChecker.SystematicTesting
         [DataMember]
         public HashSet<string> InternalErrors { get; internal set; }
 
+
+        /// <summary>
+        /// Set of hashes of timelines discovered by the scheduler.
+        /// </summary>
+        [DataMember]
+        public HashSet<int> ExploredTimelines = new();
+
+        /// <summary>
+        /// Number of schedulings that satisfies the pattern.
+        /// </summary>
+        [DataMember]
+        public Dictionary<int, int> ValidScheduling = new();
+
         /// <summary>
         /// Lock for the test report.
         /// </summary>
@@ -147,6 +160,7 @@ namespace PChecker.SystematicTesting
             lock (Lock)
             {
                 CoverageInfo.Merge(testReport.CoverageInfo);
+                ExploredTimelines.UnionWith(testReport.ExploredTimelines);
 
                 NumOfFoundBugs += testReport.NumOfFoundBugs;
 
@@ -232,6 +246,13 @@ namespace PChecker.SystematicTesting
                 prefix.Equals("...") ? "....." : prefix,
                 totalExploredSchedules,
                 totalExploredSchedules == 1 ? string.Empty : "s");
+
+            report.AppendLine();
+            report.AppendFormat(
+                "{0} Explored {1} timeline{2}",
+                prefix.Equals("...") ? "....." : prefix,
+                ExploredTimelines.Count,
+                ExploredTimelines.Count == 1 ? string.Empty : "s");
 
             if (totalExploredSchedules > 0 &&
                 NumOfFoundBugs > 0)

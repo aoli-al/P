@@ -229,7 +229,7 @@ namespace PChecker
         /// Defaults to true.
         /// </summary>
         [DataMember]
-        public bool IsJsonLogEnabled { get; set; } = true;
+        public bool IsJsonLogEnabled { get; set; }
 
         /// <summary>
         /// If specified, requests a custom runtime log to be used instead of the default.
@@ -256,6 +256,12 @@ namespace PChecker
         /// </summary>
         [DataMember]
         public uint TestingProcessId;
+
+        /// <summary>
+        /// The source of the pattern generator.
+        /// </summary>
+        [DataMember]
+        public string PatternSource;
 
         /// <summary>
         /// Additional assembly specifications to instrument for code coverage, besides those in the
@@ -287,6 +293,48 @@ namespace PChecker
         public string JvmArgs;
 
         /// <summary>
+        /// For feedback strategy, save input if the pattern are partially matched.
+        /// </summary>
+        [DataMember]
+        public bool SavePartialMatch;
+
+        /// <summary>
+        /// For feedback strategy, discard saved generators if the size of the buffer is greater than N.
+        /// </summary>
+        [DataMember]
+        public int DiscardAfter;
+
+        /// <summary>
+        /// For feedback strategy, schedule generator mutations based on diversity.
+        /// </summary>
+        [DataMember]
+        public bool DiversityBasedPriority;
+
+        /// <summary>
+        /// For feedback strategy, ignore the pattern feedback.
+        /// </summary>
+        [DataMember]
+        public bool IgnorePatternFeedback;
+
+        /// <summary>
+        /// For feedback strategy, use priority based sampling.
+        /// </summary>
+        [DataMember]
+        public bool PriorityBasedSampling;
+
+        /// <summary>
+        /// Enable conflict analysis for scheduling optimization.
+        /// </summary>
+        [DataMember]
+        public bool EnableConflictAnalysis;
+
+        /// <summary>
+        /// Observing events for timeline construction.
+        /// </summary>
+        [DataMember]
+        public HashSet<string> ObservingEvents;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="CheckerConfiguration"/> class.
         /// </summary>
         protected CheckerConfiguration()
@@ -307,7 +355,7 @@ namespace PChecker
             RandomGeneratorSeed = null;
             IncrementalSchedulingSeed = false;
             PerformFullExploration = false;
-            MaxFairSchedulingSteps = 100000; // 10 times the unfair steps
+            MaxFairSchedulingSteps = 10000; // 10 times the unfair steps
             MaxUnfairSchedulingSteps = 10000;
             UserExplicitlySetMaxFairSchedulingSteps = false;
             TestingProcessId = 0;
@@ -331,9 +379,17 @@ namespace PChecker
 
             EnableColoredConsoleOutput = false;
             DisableEnvironmentExit = true;
+            SavePartialMatch = true;
+            DiscardAfter = 100;
+            DiversityBasedPriority = true;
+            IgnorePatternFeedback = false;
+            PriorityBasedSampling = true;
+            EnableConflictAnalysis = false;
+            ObservingEvents = new();
 
             PSymArgs = "";
             JvmArgs = "";
+            PatternSource = "";
         }
 
         /// <summary>
