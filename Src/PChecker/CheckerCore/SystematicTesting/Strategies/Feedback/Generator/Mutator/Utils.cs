@@ -16,12 +16,12 @@ public class Utils
         meanMutationCount = Math.Max(Math.Min(randomChoices.Data.Count / 3, meanMutationCount), 1);
         meanMutationSize = Math.Max(Math.Min(randomChoices.Data.Count / 3, meanMutationSize), 1);
         RandomChoices<T> newChoices = new RandomChoices<T>(randomChoices);
-        int mutations = Utils.SampleGeometric(1.0f / meanMutationCount, random.NextDouble());
+        int mutations = Math.Max(Utils.SampleGeometric(1.0f / meanMutationCount, random.NextDouble()), 1);
 
         while (mutations-- > 0)
         {
             int offset = random.Next(newChoices.Data.Count);
-            int mutationSize = Utils.SampleGeometric(1.0f / meanMutationSize, random.NextDouble());
+            int mutationSize = Math.Max(Utils.SampleGeometric(1.0f / meanMutationSize, random.NextDouble()), 1);
             for (int i = offset; i < offset + mutationSize; i++)
             {
                 if (i >= newChoices.Data.Count)
