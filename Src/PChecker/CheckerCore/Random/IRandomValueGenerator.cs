@@ -1,6 +1,8 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using System;
+
 namespace PChecker.Random
 {
     /// <summary>
@@ -29,5 +31,11 @@ namespace PChecker.Random
         /// than or equal to 0.0, and less than 1.0.
         /// </summary>
         double NextDouble();
+
+        /// <summary>
+        /// Save random choices to file.
+        /// </summary>
+        /// <param name="path">Path of the file.</param>
+        void SaveToFile(String path);
     }
 }
