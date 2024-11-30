@@ -100,6 +100,8 @@ namespace PChecker.Coverage
                 eventSet.UnionWith(pair.Value);
             }
         }
+
+        public override int GetHashCode() => (EventsSent, EventsReceived).GetHashCode();
     }
 
     internal class ActorRuntimeLogEventCoverage : IActorRuntimeLog

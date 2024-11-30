@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Data.SqlTypes;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -24,6 +25,7 @@ using PChecker.Random;
 using PChecker.Runtime;
 using PChecker.SystematicTesting.Strategies;
 using PChecker.SystematicTesting.Strategies.Exhaustive;
+using PChecker.SystematicTesting.Strategies.Feedback;
 using PChecker.SystematicTesting.Strategies.Probabilistic;
 using PChecker.SystematicTesting.Strategies.Special;
 using PChecker.SystematicTesting.Traces;
@@ -317,6 +319,10 @@ namespace PChecker.SystematicTesting
             {
                 Strategy = new DFSStrategy(checkerConfiguration.MaxUnfairSchedulingSteps);
             }
+            else if (checkerConfiguration.SchedulingStrategy is "feedback")
+            {
+                Strategy = new FeedbackGuidedStrategy(_checkerConfiguration);
+            }
             else if (checkerConfiguration.SchedulingStrategy is "portfolio")
             {
                 Error.ReportAndExit("Portfolio testing strategy is only " +
@@ -561,6 +567,11 @@ namespace PChecker.SystematicTesting
                 foreach (var callback in PerIterationCallbacks)
                 {
                     callback(schedule);
+                }
+
+                if (Strategy is FeedbackGuidedStrategy strategy)
+                {
+                    strategy.ObserveRunningResults(runtime);
                 }
 
                 // Checks that no monitor is in a hot state at termination. Only
