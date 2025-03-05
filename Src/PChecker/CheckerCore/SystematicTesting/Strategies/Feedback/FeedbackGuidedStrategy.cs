@@ -97,7 +97,7 @@ internal class FeedbackGuidedStrategy : IFeedbackGuidedStrategy
     /// <inheritdoc/>
     public bool IsFair()
     {
-        return true;
+        return false;
     }
 
     /// <inheritdoc/>
