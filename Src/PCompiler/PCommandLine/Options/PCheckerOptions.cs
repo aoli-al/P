@@ -31,7 +31,7 @@ namespace Plang.Options
             basicOptions.AddPositionalArgument("path", "Path to the compiled file to check for correctness (*.dll)."+
                                                        " If this option is not passed, the compiler searches for a *.dll file in the current folder").IsRequired = false;
             var modes = basicOptions.AddArgument("mode", "md", "Choose a checker mode (options: bugfinding, verification, coverage, pobserve). (default: bugfinding)");
-            modes.AllowedValues = new List<string>() { "bugfinding", "verification", "coverage", "pobserve" };
+            modes.AllowedValues = new List<string> { "bugfinding", "verification", "coverage", "pobserve" };
             modes.IsHidden = true;
             basicOptions.AddArgument("testcase", "tc", "Test case to explore");
             // basicOptions.AddArgument("smoke-testing", "tsmoke",
@@ -59,15 +59,18 @@ namespace Plang.Options
             schedulingGroup.AddArgument("sch-feedbackpct", null, "Choose the PCT scheduling strategy with feedback mutation", typeof(uint));
             schedulingGroup.AddArgument("sch-feedbackpos", null,
                 "Choose the POS scheduling strategy with feedback mutation", typeof(bool));
+            schedulingGroup.AddArgument("sch-feedbacksurw", null,
+                "Choose the SURW scheduling strategy with feedback mutation", typeof(bool));
 
             schedulingGroup.AddArgument("sch-probabilistic", "sp", "Choose the probabilistic scheduling strategy with given probability for each scheduling decision where the probability is " +
                                                                    "specified as the integer N in the equation 0.5 to the power of N.  So for N=1, the probability is 0.5, for N=2 the probability is 0.25, N=3 you get 0.125, etc.", typeof(uint));
             schedulingGroup.AddArgument("sch-pct", null, "Choose the PCT scheduling strategy with given maximum number of priority switch points", typeof(uint));
             schedulingGroup.AddArgument("sch-pos", null, "Choose the POS scheduling strategy", typeof(bool));
+            schedulingGroup.AddArgument("sch-surw", null, "Choose the Selectively Uniform Random Walk (SURW) scheduling strategy", typeof(bool));
             schedulingGroup.AddArgument("sch-fairpct", null, "Choose the fair PCT scheduling strategy with given maximum number of priority switch points", typeof(uint));
             schedulingGroup.AddArgument("sch-rl", null, "Choose the reinforcement learning (RL) scheduling strategy", typeof(bool)).IsHidden = true;
             var schCoverage = schedulingGroup.AddArgument("sch-coverage", null, "Choose the scheduling strategy for coverage mode (options: learn, random, dfs, stateless). (default: learn)");
-            schCoverage.AllowedValues = new List<string>() { "learn", "random", "dfs", "stateless" };
+            schCoverage.AllowedValues = new List<string> { "learn", "random", "dfs", "stateless" };
             schCoverage.IsHidden = true;
 
             var replayOptions = Parser.GetOrCreateGroup("replay", "Replay and debug options");
@@ -233,7 +236,9 @@ namespace Plang.Options
                     break;
                 case "sch-random":
                 case "sch-pos":
+                case "sch-surw":
                 case "sch-feedbackpos":
+                case "sch-feedbacksurw":
                 case "sch-feedback":
                     checkerConfiguration.SchedulingStrategy = option.LongName.Substring(4);
                     break;
@@ -349,8 +354,10 @@ namespace Plang.Options
                 checkerConfiguration.SchedulingStrategy != "feedback" &&
                 checkerConfiguration.SchedulingStrategy != "feedbackpct" &&
                 checkerConfiguration.SchedulingStrategy != "feedbackpos" &&
+                checkerConfiguration.SchedulingStrategy != "feedbacksurw" &&
                 checkerConfiguration.SchedulingStrategy != "pct" &&
                 checkerConfiguration.SchedulingStrategy != "pos" &&
+                checkerConfiguration.SchedulingStrategy != "surw" &&
                 checkerConfiguration.SchedulingStrategy != "fairpct" &&
                 checkerConfiguration.SchedulingStrategy != "probabilistic" &&
                 checkerConfiguration.SchedulingStrategy != "rl" &&

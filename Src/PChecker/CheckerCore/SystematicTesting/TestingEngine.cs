@@ -17,8 +17,6 @@ using System.Threading.Tasks;
 using System.Xml;
 using PChecker.Coverage;
 using PChecker.Feedback;
-using PChecker.Generator;
-using PChecker.Generator.Mutator;
 using PChecker.Generator.Object;
 using PChecker.IO;
 using PChecker.IO.Debugging;
@@ -296,6 +294,12 @@ namespace PChecker.SystematicTesting
                 Strategy = new ScheduleAndInputStrategy(checkerConfiguration.MaxUnfairSchedulingSteps,
                     RandomValueGenerator, scheduler);
             }
+            else if (checkerConfiguration.SchedulingStrategy is "surw")
+            {
+                var scheduler = new SURWScheduler(new(), new(), new(), RandomValueGenerator);
+                Strategy = new ScheduleAndInputStrategy(checkerConfiguration.MaxFairSchedulingSteps,
+                    RandomValueGenerator, scheduler);
+            }
             else if (checkerConfiguration.SchedulingStrategy is "fairpct")
             {
                 var prefixLength = checkerConfiguration.MaxUnfairSchedulingSteps;
@@ -330,6 +334,11 @@ namespace PChecker.SystematicTesting
             {
                 Strategy = new FeedbackGuidedStrategy(checkerConfiguration, new ControlledRandom(checkerConfiguration),
                     new POSScheduler(new ControlledRandom(checkerConfiguration)));
+            }
+            else if (checkerConfiguration.SchedulingStrategy is "feedbacksurw")
+            {
+                Strategy = new FeedbackGuidedStrategy(checkerConfiguration, new ControlledRandom(checkerConfiguration),
+                    new SURWScheduler(new(), new(), new(), new ControlledRandom(checkerConfiguration)));
             }
             else if (checkerConfiguration.SchedulingStrategy is "portfolio")
             {
@@ -371,7 +380,7 @@ namespace PChecker.SystematicTesting
             {
                 if (CancellationTokenSource.IsCancellationRequested)
                 {
-                    Logger.WriteLine($"... Checker timed out.");
+                    Logger.WriteLine("... Checker timed out.");
                 }
             }
             catch (AggregateException aex)
@@ -382,7 +391,7 @@ namespace PChecker.SystematicTesting
                 }
                 else
                 {
-                    aex.Handle((ex) =>
+                    aex.Handle(ex =>
                     {
                         Debug.WriteLine(ex.Message);
                         Debug.WriteLine(ex.StackTrace);
@@ -419,9 +428,11 @@ namespace PChecker.SystematicTesting
             if (_checkerConfiguration.SchedulingStrategy is "random" ||
                 _checkerConfiguration.SchedulingStrategy is "pct" ||
                 _checkerConfiguration.SchedulingStrategy is "pos" ||
+                _checkerConfiguration.SchedulingStrategy is "surw" ||
                 _checkerConfiguration.SchedulingStrategy is "feedbackpct" ||
                 _checkerConfiguration.SchedulingStrategy is "feedbackpctcp" ||
                 _checkerConfiguration.SchedulingStrategy is "feedbackpos" ||
+                _checkerConfiguration.SchedulingStrategy is "feedbacksurw" ||
                 _checkerConfiguration.SchedulingStrategy is "fairpct" ||
                 _checkerConfiguration.SchedulingStrategy is "probabilistic" ||
                 _checkerConfiguration.SchedulingStrategy is "rl")
@@ -629,10 +640,6 @@ namespace PChecker.SystematicTesting
                     }
 
                     ConstructReproducableTrace(runtime);
-                    if (_checkerConfiguration.OutputDirectory != null)
-                    {
-                        TryEmitTraces(_checkerConfiguration.OutputDirectory, "trace_0");
-                    }
                 }
             }
             finally
@@ -648,10 +655,6 @@ namespace PChecker.SystematicTesting
                 if (ShouldPrintIteration(schedule))
                 {
                     var seconds = watch.Elapsed.TotalSeconds;
-                    if (Strategy is IFeedbackGuidedStrategy s)
-                    {
-                        s.DumpStats(Logger);
-                    }
                 }
 
                 if (!IsReplayModeEnabled && _checkerConfiguration.PerformFullExploration && runtime.Scheduler.BugFound)
@@ -712,7 +715,8 @@ namespace PChecker.SystematicTesting
                 }
                 return newDictionary;
             }
-            else if (obj is Dictionary<int, object> dictionaryInt) {
+
+            if (obj is Dictionary<int, object> dictionaryInt) {
                 var newDictionary = new Dictionary<int, object>();
                 foreach (var item in dictionaryInt) {
                     var newVal = RecursivelyReplaceNullWithString(item.Value);
@@ -721,7 +725,8 @@ namespace PChecker.SystematicTesting
                 }
                 return newDictionary;
             }
-            else if (obj is List<object> list)
+
+            if (obj is List<object> list)
             {
                 var newList = new List<object>();
                 foreach (var item in list)
@@ -733,10 +738,8 @@ namespace PChecker.SystematicTesting
 
                 return newList;
             }
-            else
-            {
-                return obj;
-            }
+
+            return obj;
         }
 
         /// <summary>
@@ -857,7 +860,7 @@ namespace PChecker.SystematicTesting
             {
                 XmlLog = new StringBuilder();
                 runtime.RegisterLog(new PCheckerLogXmlFormatter(XmlWriter.Create(XmlLog,
-                    new XmlWriterSettings() { Indent = true, IndentChars = "  ", OmitXmlDeclaration = true })));
+                    new XmlWriterSettings { Indent = true, IndentChars = "  ", OmitXmlDeclaration = true })));
             }
         }
 
@@ -1021,7 +1024,7 @@ namespace PChecker.SystematicTesting
             if (_checkerConfiguration.ScheduleTrace.Length > 0)
             {
                 scheduleDump =
-                    _checkerConfiguration.ScheduleTrace.Split(new string[] { Environment.NewLine },
+                    _checkerConfiguration.ScheduleTrace.Split(new[] { Environment.NewLine },
                         StringSplitOptions.None);
             }
             else
