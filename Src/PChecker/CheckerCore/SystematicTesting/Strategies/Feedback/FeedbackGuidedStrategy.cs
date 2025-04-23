@@ -213,6 +213,13 @@ internal class FeedbackGuidedStrategy : IFeedbackGuidedStrategy
                 _visitedGenerators.Add(_currentParent);
                 _pendingMutations = 50;
             }
+            
+            if (!_priorityBasedSampling && _pendingMutations == 0)
+            {
+                _currentParent = _savedGenerators[_rnd.Next(_savedGenerators.Count)];
+                _pendingMutations = 50;
+            }
+
 
             if (_pendingMutations == 0)
             {
