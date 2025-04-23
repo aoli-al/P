@@ -279,6 +279,10 @@ namespace PChecker
         /// </summary>
         [DataMember]
         public string JvmArgs;
+        
+        
+        [DataMember]
+        public bool PriorityBasedSampling;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="CheckerConfiguration"/> class.
@@ -324,6 +328,7 @@ namespace PChecker
 
             EnableColoredConsoleOutput = false;
             DisableEnvironmentExit = true;
+            PriorityBasedSampling = true;
 
             PSymArgs = "";
             JvmArgs = "";

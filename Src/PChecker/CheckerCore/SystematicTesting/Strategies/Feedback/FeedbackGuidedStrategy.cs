@@ -31,6 +31,7 @@ internal class FeedbackGuidedStrategy : IFeedbackGuidedStrategy
     private GeneratorRecord _currentParent;
 
     private System.Random _rnd = new System.Random();
+    private bool _priorityBasedSampling;
 
 
 
@@ -40,6 +41,7 @@ internal class FeedbackGuidedStrategy : IFeedbackGuidedStrategy
     public FeedbackGuidedStrategy(CheckerConfiguration checkerConfiguration, ControlledRandom inputGenerator, IScheduler scheduler)
     {
         _maxScheduledSteps = checkerConfiguration.MaxUnfairSchedulingSteps;
+        _priorityBasedSampling = checkerConfiguration.PriorityBasedSampling;
         Generator = new StrategyGenerator(inputGenerator, scheduler);
     }
 
@@ -115,6 +117,11 @@ internal class FeedbackGuidedStrategy : IFeedbackGuidedStrategy
         if (!_visitedTimelines.Add(timeline))
         {
             return 0;
+        }
+
+        if (!_priorityBasedSampling)
+        {
+            return 20;
         }
 
         if (_savedGenerators.Count == 0)

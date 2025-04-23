@@ -81,6 +81,7 @@ namespace Plang.Options
             advancedGroup.AddArgument("xml-trace", null, "Specify a filename for XML runtime log output to be written to", typeof(bool));
             advancedGroup.AddArgument("psym-args", null, "Specify a concatenated list of additional PSym-specific arguments to pass, each starting with a colon").IsHidden = true;
             advancedGroup.AddArgument("jvm-args", null, "Specify a concatenated list of PSym-specific JVM arguments to pass, each starting with a colon").IsHidden = true;
+            advancedGroup.AddArgument("no-priority-based", null, "For feedback strategy, disable priority based sampling.", typeof(bool));
         }
 
         /// <summary>
@@ -322,6 +323,9 @@ namespace Plang.Options
                     break;
                 case "pproj":
                     // do nothing, since already configured through UpdateConfigurationWithPProjectFile
+                    break;
+                case "no-priority-based":
+                    checkerConfiguration.PriorityBasedSampling = false;
                     break;
                 default:
                     throw new Exception(string.Format("Unhandled parsed argument: '{0}'", option.LongName));
